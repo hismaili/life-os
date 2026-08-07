@@ -74,16 +74,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Ships docker-compose.prod.yml to the VM so it always matches what
-      # was tested in CI, rather than trusting whatever is already there.
-      - name: Copy compose file to VM
+      # Ships docker-compose.prod.yml and the Postgres client-cert auth
+      # config to the VM so they always match what was tested in CI, rather
+      # than trusting whatever is already there. Does NOT ship ./certs —
+      # those are real per-VM secrets provisioned out of band (see
+      # docker-compose.prod.yml's header comment), never generated in CI.
+      - name: Copy compose + postgres config to VM
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.ORACLE_VM_HOST }}
           username: ${{ secrets.ORACLE_VM_USER }}
           key: ${{ secrets.ORACLE_VM_SSH_KEY }}
           port: ${{ secrets.ORACLE_VM_SSH_PORT || 22 }}
-          source: docker-compose.prod.yml
+          source: docker-compose.prod.yml,postgres/pg_hba.conf
           target: ~/lifeos/
 
       - name: Pull image and restart the stack

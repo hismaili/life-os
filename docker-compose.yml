@@ -2,7 +2,13 @@
 # a disposable Postgres. Compose-spec only (no Docker-specific extensions),
 # so it works with either `podman-compose` or `docker compose`.
 #
+#   ./scripts/generate-dev-certs.sh   # once, or whenever you want to rotate certs
 #   podman-compose up --build
+#
+# Postgres auth is client-certificate only (see postgres/pg_hba.conf) — the
+# app authenticates with the TLS client cert generated above, never a
+# password. POSTGRES_PASSWORD still bootstraps the image's initial
+# superuser (required by the postgres image itself) but the app never uses it.
 #
 # For a deploy that pulls a pre-built image instead of building locally,
 # layer docker-compose.prod.yml on top (see that file's header).
@@ -17,6 +23,26 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lifeos}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./certs:/certs-src:ro
+    # The bind-mounted server.key is owned by the host user, but Postgres
+    # refuses to start with a private key readable by anyone but its own
+    # uid. Copy it into the postgres user's own space and fix
+    # ownership/permissions before handing off to the real entrypoint.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        cp /certs-src/server.key /var/lib/postgresql/server.key
+        chown postgres:postgres /var/lib/postgresql/server.key
+        chmod 600 /var/lib/postgresql/server.key
+        exec docker-entrypoint.sh postgres \
+          -c ssl=on \
+          -c ssl_cert_file=/certs-src/server.crt \
+          -c ssl_key_file=/var/lib/postgresql/server.key \
+          -c ssl_ca_file=/certs-src/ca.crt \
+          -c hba_file=/etc/postgresql/pg_hba.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lifeos} -d ${POSTGRES_DB:-lifeos}"]
       interval: 5s
@@ -32,10 +58,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-lifeos}
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-lifeos}?sslmode=verify-full&sslcert=/certs/client.crt&sslkey=/certs/client.pk8&sslrootcert=/certs/ca.crt"
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-lifeos}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-lifeos}
       NOTION_VERSION: ${NOTION_VERSION:-2026-03-11}
+    volumes:
+      - ./certs:/certs:ro
     ports:
       - "${APP_PORT:-8080}:8080"
 

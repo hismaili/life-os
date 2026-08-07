@@ -13,6 +13,16 @@
 # TODO(deploy): this is a placeholder — confirm the registry image name,
 # reverse proxy / TLS setup, and backup strategy for the postgres-data
 # volume before relying on it for a real deployment.
+#
+# Postgres auth is client-certificate only, same as local dev (see
+# postgres/pg_hba.conf and scripts/generate-dev-certs.sh) — but the certs
+# here must be *real* ones for this VM, not the dev script's throwaway CA.
+# TODO(deploy): provision a real CA + server/client cert for this VM and
+# place them at CERTS_DIR (default ./certs, alongside this file); the
+# server cert's CN must match whatever hostname the app container resolves
+# "postgres" to, and the client cert's CN must match POSTGRES_USER.
+# postgres/pg_hba.conf must also be present alongside this file (the CD
+# workflow's scp step copies it there).
 
 services:
   postgres:
@@ -21,9 +31,27 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-lifeos}
       POSTGRES_USER: ${POSTGRES_USER:-lifeos}
+      # Only bootstraps the image's initial superuser; the app never
+      # authenticates with it — see postgres/pg_hba.conf (hostssl ... cert).
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ${CERTS_DIR:-./certs}:/certs-src:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        cp /certs-src/server.key /var/lib/postgresql/server.key
+        chown postgres:postgres /var/lib/postgresql/server.key
+        chmod 600 /var/lib/postgresql/server.key
+        exec docker-entrypoint.sh postgres \
+          -c ssl=on \
+          -c ssl_cert_file=/certs-src/server.crt \
+          -c ssl_key_file=/var/lib/postgresql/server.key \
+          -c ssl_ca_file=/certs-src/ca.crt \
+          -c hba_file=/etc/postgresql/pg_hba.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lifeos} -d ${POSTGRES_DB:-lifeos}"]
       interval: 5s
@@ -37,10 +65,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-lifeos}
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-lifeos}?sslmode=verify-full&sslcert=/certs/client.crt&sslkey=/certs/client.pk8&sslrootcert=/certs/ca.crt"
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-lifeos}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       NOTION_VERSION: ${NOTION_VERSION:-2026-03-11}
+    volumes:
+      - ${CERTS_DIR:-./certs}:/certs:ro
     # Loopback-only: put a reverse proxy/TLS terminator in front on the VM
     # rather than exposing the app port directly to the internet.
     ports:
