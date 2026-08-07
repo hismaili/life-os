@@ -1,0 +1,101 @@
+name: CD (placeholder)
+
+# PLACEHOLDER WORKFLOW — not wired to run automatically yet.
+#
+# Manual-dispatch only until the Oracle Cloud VM exists and these repo
+# secrets are configured (Settings -> Secrets and variables -> Actions):
+#   ORACLE_VM_HOST        VM public IP or hostname
+#   ORACLE_VM_USER        SSH user (e.g. opc / ubuntu)
+#   ORACLE_VM_SSH_KEY     private key matching a public key already on the VM
+#   ORACLE_VM_SSH_PORT    optional, defaults to 22
+#
+# A `.env` (see .env.example) must also exist at ~/lifeos/.env on the VM
+# itself, created once out of band — it holds NOTION_TOKEN/POSTGRES_PASSWORD
+# and is deliberately not shipped through this workflow or its logs.
+#
+# TODO(deploy): once the VM is provisioned, decide whether to also trigger
+# this on `push` of version tags (e.g. `v*.*.*`) instead of dispatch-only.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to build and deploy
+        required: false
+        default: latest
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build & push image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - id: image
+        run: echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to Oracle Cloud VM
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    # Placeholder: flip this on once the VM secrets above are configured.
+    if: false
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ships docker-compose.prod.yml to the VM so it always matches what
+      # was tested in CI, rather than trusting whatever is already there.
+      - name: Copy compose file to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ORACLE_VM_HOST }}
+          username: ${{ secrets.ORACLE_VM_USER }}
+          key: ${{ secrets.ORACLE_VM_SSH_KEY }}
+          port: ${{ secrets.ORACLE_VM_SSH_PORT || 22 }}
+          source: docker-compose.prod.yml
+          target: ~/lifeos/
+
+      - name: Pull image and restart the stack
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ORACLE_VM_HOST }}
+          username: ${{ secrets.ORACLE_VM_USER }}
+          key: ${{ secrets.ORACLE_VM_SSH_KEY }}
+          port: ${{ secrets.ORACLE_VM_SSH_PORT || 22 }}
+          envs: IMAGE
+          script: |
+            set -euo pipefail
+            cd ~/lifeos
+            export IMAGE="${{ needs.build-and-push.outputs.image }}"
+            podman-compose -f docker-compose.prod.yml pull
+            podman-compose -f docker-compose.prod.yml up -d
+            podman image prune -f
