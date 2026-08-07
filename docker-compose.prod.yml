@@ -1,0 +1,52 @@
+# Production placeholder for the CD workflow (.github/workflows/cd.yml).
+# Standalone on purpose (not a `-f docker-compose.yml -f ...` overlay): it
+# only ever pulls a pre-built image, never builds from source, so it never
+# needs the ./backend build context to be present on the target VM.
+#
+# Usage on the target VM (Oracle Cloud free-tier small VM; podman + podman-compose):
+#
+#   IMAGE=ghcr.io/<owner>/lifeos-backend:<tag> \
+#     podman-compose -f docker-compose.prod.yml pull
+#   IMAGE=ghcr.io/<owner>/lifeos-backend:<tag> \
+#     podman-compose -f docker-compose.prod.yml up -d
+#
+# TODO(deploy): this is a placeholder — confirm the registry image name,
+# reverse proxy / TLS setup, and backup strategy for the postgres-data
+# volume before relying on it for a real deployment.
+
+services:
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lifeos}
+      POSTGRES_USER: ${POSTGRES_USER:-lifeos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lifeos} -d ${POSTGRES_DB:-lifeos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: ${IMAGE:?set IMAGE to the published backend image, e.g. ghcr.io/<owner>/lifeos-backend:latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-lifeos}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-lifeos}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      NOTION_TOKEN: ${NOTION_TOKEN:?set NOTION_TOKEN}
+      NOTION_ROOT_PARENT_PAGE_ID: ${NOTION_ROOT_PARENT_PAGE_ID:?set NOTION_ROOT_PARENT_PAGE_ID}
+      NOTION_VERSION: ${NOTION_VERSION:-2026-03-11}
+    # Loopback-only: put a reverse proxy/TLS terminator in front on the VM
+    # rather than exposing the app port directly to the internet.
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+
+volumes:
+  postgres-data:

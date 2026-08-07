@@ -1,0 +1,45 @@
+# Local/dev stack: builds the backend image from source and runs it against
+# a disposable Postgres. Compose-spec only (no Docker-specific extensions),
+# so it works with either `podman-compose` or `docker compose`.
+#
+#   podman-compose up --build
+#
+# For a deploy that pulls a pre-built image instead of building locally,
+# layer docker-compose.prod.yml on top (see that file's header).
+
+services:
+  postgres:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lifeos}
+      POSTGRES_USER: ${POSTGRES_USER:-lifeos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lifeos}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lifeos} -d ${POSTGRES_DB:-lifeos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-lifeos}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-lifeos}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-lifeos}
+      NOTION_TOKEN: ${NOTION_TOKEN:-}
+      NOTION_ROOT_PARENT_PAGE_ID: ${NOTION_ROOT_PARENT_PAGE_ID:-}
+      NOTION_VERSION: ${NOTION_VERSION:-2026-03-11}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
+volumes:
+  postgres-data:

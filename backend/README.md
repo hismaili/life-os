@@ -90,3 +90,29 @@ stub never silently reports success (see [`../CLAUDE.md`](../CLAUDE.md), "no sil
 
 The same use case is exposed at `POST /api/workspaces` (see
 `infrastructure.adapter.web.WorkspaceController`) with a `CreateWorkspaceRequest` JSON body.
+
+## Containers (Podman/Docker)
+
+`backend/Dockerfile` is a multi-stage build (Maven build stage + JRE runtime stage); the runtime
+image runs the app headless (`SPRING_SHELL_INTERACTIVE_ENABLED=false`) so it serves the REST API
+instead of opening an interactive shell prompt.
+
+The root-level `docker-compose.yml` runs the app plus a disposable Postgres, using the compose
+spec only (no Docker-specific extensions) so it works with either Podman or Docker:
+
+```bash
+cp .env.example .env   # fill in NOTION_TOKEN / NOTION_ROOT_PARENT_PAGE_ID
+podman-compose up --build
+```
+
+`docker-compose.prod.yml` is the CD counterpart: a standalone file that pulls a pre-built image
+(`IMAGE=ghcr.io/<owner>/lifeos-backend:<tag>`) rather than building from source — see
+`.github/workflows/cd.yml`.
+
+## CI/CD
+
+- `.github/workflows/ci.yml` — runs on every push/PR to `main`: `./mvnw verify` (unit +
+  Testcontainers integration tests), then a build-only validation of `backend/Dockerfile`.
+- `.github/workflows/cd.yml` — **placeholder**, manual-dispatch only until an Oracle Cloud VM and
+  its SSH/registry secrets are configured. See the workflow file's header comment for the exact
+  secrets it expects.
