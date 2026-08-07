@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: lifeos-backend
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+notion:
+  token: ${NOTION_TOKEN:}
+  version: ${NOTION_VERSION:2026-03-11}
+  root-parent-page-id: ${NOTION_ROOT_PARENT_PAGE_ID:}

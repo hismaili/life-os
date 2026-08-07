@@ -1,0 +1,12 @@
+# Created at 2026-08-07T01:02:42.040
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream 'Dashboard: FAILED (boom)'.
+
+# Created at 2026-08-07T01:02:42.218
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '[31mMissing mandatory option '--name'[0m'.
+
+# Created at 2026-08-07T01:02:42.428
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream 'Dashboard: CREATED'.
+
+# Created at 2026-08-07T01:02:42.614
+Corrupted channel by directly writing to native stream in forked JVM 1. Stream '[31mMissing mandatory option '--person-id'[0m'.
+

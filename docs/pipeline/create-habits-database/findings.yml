@@ -1,0 +1,28 @@
+findings:
+  - id: QA-001
+    raised_by: spring-qa
+    stage: qa
+    severity: Low
+    symptom: "QA-PASS: no violations found. All 15 FRs and 10 NFRs of Create Habits Database are satisfied with correctly-asserting tests; ./mvnw verify is green on both tiers (unit 239/239 incl. CreateHabitsDatabaseServiceTest 17/17; failsafe 21/21 incl. CreateHabitsDatabaseServiceIT 4/4, confirmed running under Failsafe not skipped); scope-honesty check confirms only CreateHabitsDatabaseService.java changed in production (adapter/port/WorkspaceLedgerWriter/domain/habit untouched, confirmed by file-modification timestamps and direct content re-read)."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/habit/CreateHabitsDatabaseService.java; backend/src/test/java/com/lifeos/application/usecase/habit/CreateHabitsDatabaseServiceTest.java; backend/src/test/java/com/lifeos/application/usecase/habit/CreateHabitsDatabaseServiceIT.java; docs/pipeline/create-habits-database/04-qa-report.md"
+    suspected_layer: na
+    proposes_decision: false
+    status: closed
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: "No fix required. QA verified acceptance criteria, design conformance, scope guard, and test adequacy; verdict PASS with zero violations."
+  - id: AUD-11
+    raised_by: spring-auditor
+    stage: audit
+    severity: Info
+    symptom: "Inherited/accepted cross-reference (not a new defect): name-only shape verification (shared, out-of-scope NotionProvisioningAdapter.verify) does not detect Frequency select option-set or property-type drift for the Habits DB; a select->text retype or option edit in Notion still verifies as PRESENT_MATCHING and triggers no repair. Same accepted trade-off as AUD-08 (Projects) / AUD-09 (Tasks); CreateHabitsDatabaseService adds no verification logic and neither reintroduces nor worsens it. Recorded so the Habits ledger is complete. Faithful-mirror audit of the sole production change is otherwise clean: 0 Critical/High/Medium/Low; control flow byte-for-byte identical to the audited CreateTasksDatabaseService after name substitution; token confined (all detail strings literal/null, logs carry only ids/outcomes); no @Transactional on execute; ledger own-transaction and Notion-write-before-ledger ordering preserved; >1 identity match propagates as FAILED before any ledger write; never-duplicate guarantee intact; Frequency reused as closed enum for select options."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/habit/CreateHabitsDatabaseService.java:115-120; verify contract modeled in backend/src/test/java/com/lifeos/application/usecase/habit/CreateHabitsDatabaseServiceIT.java:161-176"
+    citation: "../create-projects-database/adr/ADR-0008 (name-only verification, accepted contract); ADR-0009 (enum-name select-option-label pattern); OWASP ASVS v4.0.3 V1 (security requirements explicit and risk-based) https://owasp.org/www-project-application-security-verification-standard/"
+    suspected_layer: architecture
+    proposes_decision: false
+    status: accepted
+    owner: architecture
+    owner_history: [architecture]
+    target_artifacts: [docs/pipeline/create-projects-database/adr/ADR-0008-database-identity-verification-nondestructive-repair.md]
+    resolution: "Accepted, no code change. Info-level cross-reference to the already-accepted AUD-08 (Projects) / AUD-09 (Tasks): name-only verify/repair is the intended v0 contract (ADR-0008). Behavior lives in the shared unchanged adapter — not reintroduced or worsened by CreateHabitsDatabaseService. Reconcile-completeness tracked as a future feature."

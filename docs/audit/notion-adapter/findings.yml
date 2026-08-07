@@ -1,0 +1,105 @@
+findings:
+  - id: AUD-001
+    raised_by: spring-auditor
+    stage: audit
+    severity: High
+    symptom: "NotionProperties record's auto-generated toString() includes the raw Notion API token; any interpolation/log/binding-error of the object leaks the secret"
+    evidence: "NotionProperties.java:9-13"
+    citation: "OWASP Cheat Sheet Series — Logging Cheat Sheet (exclude auth secrets/keys); OWASP ASVS 5.0 V7 (Error Handling & Logging)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: open
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: null
+
+  - id: AUD-002
+    raised_by: spring-auditor
+    stage: audit
+    severity: Medium
+    symptom: "Unguarded dataSources().get(0) and dataSource.properties() dereference untrusted/absent Notion response, causing NPE/IndexOutOfBounds instead of a domain error"
+    evidence: "NotionProvisioningAdapter.java:149; NotionProvisioningAdapter.java:197"
+    citation: "Effective Java, Item 54: Return empty collections, not nulls; OWASP ASVS 5.0 V5 (Validation of external data)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: open
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: null
+
+  - id: AUD-003
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Pagination loops driven solely by API has_more/next_cursor with no page cap and no null-check on results(); a looping cursor or null results causes unbounded loop/memory or NPE"
+    evidence: "NotionProvisioningAdapter.java:98-112; NotionProvisioningAdapter.java:164-173"
+    citation: "OWASP Cheat Sheet Series — Denial of Service Cheat Sheet (bound loops on external input)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: open
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: null
+
+  - id: AUD-004
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "pageId/parentPageId/databaseId/cursor interpolated into outbound request paths without format validation; SSRF/path-traversal is mitigated only by fixed baseUrl + URI-template encoding"
+    evidence: "NotionProvisioningAdapter.java:166; NotionClient.java:31"
+    citation: "OWASP Cheat Sheet Series — Server-Side Request Forgery Prevention Cheat Sheet (validate/allowlist request-building inputs)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: open
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: null
+
+  - id: AUD-005
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "RestClientCustomizer applies Notion's 5s/20s timeouts to every auto-configured RestClient.Builder in the context, over-broadly coupling future integrations to Notion's tuning"
+    evidence: "NotionClientConfiguration.java:11-14"
+    citation: "Spring Boot Reference — Calling REST Services (RestClientCustomizer applies to the auto-configured builder)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: open
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: null
+
+  - id: AUD-006
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Local variable 'properties' in createDatabase shadows the NotionProperties field of the same name, an error-prone trap"
+    evidence: "NotionProvisioningAdapter.java:127"
+    citation: "Effective Java, Item 57: Minimize the scope of local variables"
+    suspected_layer: impl
+    proposes_decision: false
+    status: open
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: null
+
+  - id: AUD-007
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Magic HTTP status literals (404, 429, 529) inline instead of named constants"
+    evidence: "NotionClient.java:51; NotionClient.java:84"
+    citation: "Spring Framework — org.springframework.http.HttpStatus (canonical status constants)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: open
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: null

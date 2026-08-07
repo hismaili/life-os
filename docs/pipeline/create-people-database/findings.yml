@@ -1,0 +1,28 @@
+findings:
+  - id: QA-001
+    raised_by: spring-qa
+    stage: qa
+    severity: Low
+    symptom: "QA-PASS: Create People Database feature independently verified against 01-spec.md/02-architecture.md/03-tech-spec.md. All 14 acceptance criteria (AC-1..AC-14) PASS with direct test evidence. ./mvnw verify: BUILD SUCCESS, unit Tests run: 299 (0 failures/errors), failsafe Tests run: 33 (0 failures/errors), CreatePeopleDatabaseServiceIT confirmed executed under Failsafe (4/4 passing). Exactly the three claimed production files changed (NotionPropertyType.java additive EMAIL member, NotionProvisioningAdapter.java +case EMAIL branch, CreatePeopleDatabaseService.java real implementation); NotionClient/NotionProvisioningPort/WorkspaceLedgerWriter/domain/person untouched. All seven Phase-B database services (Projects/Tasks/Knowledge/Habits/Journal/Resources/People) confirmed real, zero remaining UnsupportedOperationException stub among them. Zero violations, zero coverage gaps."
+    evidence: "docs/pipeline/create-people-database/04-qa-report.md (full matrix); backend/src/main/java/com/lifeos/application/usecase/person/CreatePeopleDatabaseService.java:1-121; backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java:262-271; backend/src/test/java/com/lifeos/application/usecase/person/CreatePeopleDatabaseServiceTest.java (17 tests, all passing); backend/src/test/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapterDatabaseTest.java (22 tests, all passing); backend/src/test/java/com/lifeos/application/usecase/person/CreatePeopleDatabaseServiceIT.java (4 tests, all passing)"
+    suspected_layer: null
+    proposes_decision: false
+    status: verified
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: "No fix required; QA independently confirmed the Implementer's reported build/test results and full acceptance-criteria compliance. This is the seventh and final Phase-B child-database step; feature is complete and closed pending Auditor sign-off."
+  - id: PEOPLE-15
+    raised_by: spring-auditor
+    stage: audit
+    severity: Info
+    symptom: "Name-only shape verification does not detect an out-of-band email->rich_text retype of the People DB 'Email' column; the email type is established at creation/add-missing but never reconciled to. Inherited, accepted v0 trade-off of the shared name-only-verify adapter contract (ADR-0008); not reintroduced or worsened by the CreatePeopleDatabaseService or the case EMAIL branch. Cross-reference of AUD-14 (Resources/URL) / AUD-08 (Projects)."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/person/CreatePeopleDatabaseService.java:118-120; backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java:268"
+    citation: "docs/pipeline/create-people-database/adr/ADR-0014-email-property-type.md (Consequences); reused ../create-projects-database/adr/ADR-0008 (name-only verification as accepted contract); OWASP ASVS v4.0.3 V1 (security/verification requirements must be explicit and risk-based) — https://owasp.org/www-project-application-security-verification-standard/"
+    suspected_layer: architecture
+    proposes_decision: false
+    status: accepted
+    owner: architecture
+    owner_history: [architecture]
+    target_artifacts: [docs/pipeline/create-people-database/adr/ADR-0014-email-property-type.md]
+    resolution: "Accepted, no code change. Inherited name-only-verify trade-off (won't detect an email->rich_text retype), documented in ADR-0014 and the accepted ADR-0008 contract; cross-reference of AUD-14 (URL)/AUD-08 (Projects). Reconcile-completeness tracked as a future feature."

@@ -1,0 +1,49 @@
+# Findings ledger — Create Projects Database feature.
+# QA (spring-qa) recorded a PASS with zero violations (preserved below as QA-PASS).
+# Auditor (spring-auditor) appended AUD-07..AUD-08 after reviewing the changed
+# surface. AUD-series continues from create-dashboard's AUD-01..06 (no collision).
+findings:
+  # QA stage (spring-qa) review of the "Create Projects Database" feature.
+  # Verdict: PASS. Independently re-ran `./mvnw test` (190/190 green) and
+  # `./mvnw verify` (unit 190/190 + Failsafe *IT 9/9 green, including
+  # CreateProjectsDatabaseServiceIT 4/4 confirmed running under Failsafe).
+  # Every FR-1..14 and NFR-1..10 has a directly-asserting test; scope-honesty
+  # check against tech-spec §10 passed (only the four adapter DB-slice methods
+  # were implemented; every other NotionProvisioningAdapter stub still throws
+  # UnsupportedOperationException). No violations or coverage gaps found.
+  - id: QA-PASS
+    raised_by: spring-qa
+    stage: qa
+    severity: null
+    status: na
+    na_reason: "QA found zero violations/gaps — see docs/pipeline/create-projects-database/04-qa-report.md for the full PASS verdict, test-run evidence, and acceptance-criteria matrix."
+
+  - id: AUD-07
+    raised_by: spring-auditor
+    stage: audit
+    severity: Medium
+    symptom: "repairShape dereferences the initial database read (titleOf(current)) with no null guard, but the shared NotionClient.get returns null on HTTP 404; a TOCTOU delete between verify(PRESENT_DRIFTED) and repair yields an uncaught NullPointerException aborting execute() instead of a controlled NotionApiException/recreate. The parallel repairPage already guards this exact 404-to-null case; repairShape drops that guard, so the two repair methods handle the client's null contract inconsistently."
+    evidence: "NotionProvisioningAdapter.java:188-189 (no null check before titleOf(current)); contrast repairPage NotionProvisioningAdapter.java:73-76; client null-on-404 contract NotionClient.java:51-52"
+    citation: "OWASP ASVS v4.0.3 §V7.4 Error Handling (https://owasp.org/www-project-application-security-verification-standard/); Effective Java, Item 54 (null-returning API forces the caller to null-check before dereferencing)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: [spring-implementer]
+    target_artifacts: [backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java, backend/src/test/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapterDatabaseTest.java]
+    resolution: "Added a null guard in repairShape immediately after GET /databases/{id} (throws NotionApiException 'database not found during repair' on 404-null), mirroring repairPage. Non-regression test repairShape_throwsNotionApiExceptionWhenDatabaseNotFound added (red before / green after). Re-verified: unit 191/191, failsafe *IT 9/9, BUILD SUCCESS on Podman; orchestrator independently re-ran the adapter tier (35/35 green). 1 iteration, no up-hops."
+
+  - id: AUD-08
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Shape verify/repair is name-presence-only: verify checks only that each required property name is present, ignoring property type and the Status SELECT option set, so a Status property retyped select->text or with edited options is reported PRESENT_MATCHING and never reconciled. This is documented, intended v0 scope (ADR-0006/0008, tech-spec §5.4, test verify_ignoresExtraUserOptionsAndUnrelatedProperties) and is the trade-off that keeps repair provably non-destructive; raised as informational tracking only, not a defect against the current spec."
+    evidence: "NotionProvisioningAdapter.java:151-155 (verify: containsKey(name) only); NotionProvisioningAdapter.java:197-201 (repairShape: adds missing-by-name only); options available but unused at dto/NotionPropertyConfig.select.options"
+    citation: "Documented scope decision — adr/ADR-0006, adr/ADR-0008, 03-tech-spec.md §5.4 (name-only shape check is the accepted contract). No OWASP/Jakarta/Spring requirement implicated; tracked reconcile-completeness risk only."
+    suspected_layer: tech-spec
+    proposes_decision: false
+    status: accepted
+    owner: architecture
+    owner_history: [architecture]
+    target_artifacts: [docs/pipeline/create-projects-database/adr/ADR-0006-property-type-mapping-status-as-select.md, docs/pipeline/create-projects-database/adr/ADR-0008-database-identity-verification-nondestructive-repair.md]
+    resolution: "Accepted scope, no code change. Name-only verify/repair (does not reconcile select-option or property-type drift) is the intended v0 contract per ADR-0006/0008 and tech-spec §5.4 — the trade-off that keeps repair provably non-destructive. Recorded as a known caveat; reconcile-completeness is tracked as a future feature."

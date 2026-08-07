@@ -1,0 +1,103 @@
+# findings.yml — Create Dashboard
+# Reconstructed 2026-08-05 during pipeline resume from 04-qa-report.md and 05-audit-report.md.
+# All findings were remediated and re-verified the same day; recorded here as closed for the pipeline record.
+# Source of truth for the fixes remains the two reports; this file is the structured index.
+
+feature: create-dashboard
+generated: 2026-08-05
+status: all-closed
+
+findings:
+  - id: QA-FAILSAFE
+    stage: qa
+    severity: informational
+    owner: build-config
+    category: quality-ci
+    summary: >-
+      maven-failsafe-plugin was not declared; *IT tests (CreateDashboardServiceIT,
+      CreateWorkspaceIT) never ran under `verify`, only via explicit -Dtest=.
+    file: backend/pom.xml
+    predates_feature: true
+    status: closed
+    resolution: >-
+      maven-failsafe-plugin added with integration-test + verify goals;
+      `TESTCONTAINERS_RYUK_DISABLED=true ./mvnw verify` now runs 5 ITs (3+2) green.
+
+  - id: AUD-01
+    stage: auditor
+    severity: high
+    owner: implementer
+    category: security-availability
+    summary: >-
+      Notion RestClient had no connect/read timeouts — an unbounded outbound call
+      can hang a provisioning thread indefinitely.
+    file: infrastructure/adapter/notion/NotionClient.java
+    blocking: true
+    status: closed
+    resolution: >-
+      Bounded connect/read timeouts added via RestClientCustomizer
+      (new NotionClientConfiguration).
+
+  - id: AUD-02
+    stage: auditor
+    severity: medium
+    owner: implementer
+    category: availability
+    summary: Retry-After header honored without an upper bound; a hostile/large value could stall a thread.
+    file: infrastructure/adapter/notion/NotionClient.java
+    status: closed
+    resolution: Retry-After sleep clamped to a sane maximum.
+
+  - id: AUD-03
+    stage: auditor
+    severity: medium
+    owner: implementer
+    category: correctness-security
+    summary: Page/database ids concatenated into URL path; should be passed as encoded URI variables.
+    file: infrastructure/adapter/notion/NotionProvisioningAdapter.java
+    status: closed
+    resolution: Path ids passed as percent-encoded URI variables; +tests.
+
+  - id: AUD-04
+    stage: auditor
+    severity: medium
+    owner: implementer
+    category: correctness
+    summary: >-
+      Orphan-adoption / dedup guarantee relied on a single /v1/search page; without
+      pagination a >1 match could be missed, weakening the never-duplicate invariant.
+    file: infrastructure/adapter/notion/NotionProvisioningAdapter.java
+    status: closed
+    resolution: Search pagination traversal added; +tests for the >1 match / FAILED path.
+
+  - id: AUD-05
+    stage: auditor
+    severity: low
+    owner: implementer
+    category: dry
+    summary: NotionClient constructed its own `new ObjectMapper()` instead of the Spring-managed bean.
+    file: infrastructure/adapter/notion/NotionClient.java
+    status: closed
+    resolution: Shared Spring-configured ObjectMapper injected through the adapter.
+
+  - id: AUD-06
+    stage: auditor
+    severity: informational
+    owner: build-config
+    category: quality-ci
+    summary: Restatement of QA-FAILSAFE for its quality implication (ITs not gated by default build).
+    file: backend/pom.xml
+    duplicate_of: QA-FAILSAFE
+    status: closed
+    resolution: Wired maven-failsafe-plugin (see QA-FAILSAFE).
+
+verification:
+  date: 2026-08-05
+  command: "./mvnw verify"
+  container_engine: "Podman 5.6.2 (DOCKER_HOST -> podman machine socket, TESTCONTAINERS_RYUK_DISABLED=true)"
+  unit_tier: "Tests run: 133, Failures: 0, Errors: 0"
+  integration_tier: "Tests run: 5, Failures: 0, Errors: 0"
+  note: >-
+    Both tiers re-confirmed green on resume (2026-08-05). Integration tier
+    (CreateDashboardServiceIT 3 + CreateWorkspaceIT 2) run against Podman as the
+    Testcontainers backend — no Docker/Colima required (see 00-preflight.md).

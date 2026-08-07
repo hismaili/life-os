@@ -1,0 +1,58 @@
+findings:
+  - id: QA-001
+    raised_by: spring-qa
+    stage: qa
+    severity: Low
+    symptom: "QA-PASS: Create Resources Database implementation verified against 01-spec.md/02-architecture.md/03-tech-spec.md with zero violations. All 13 acceptance criteria (AC-1..AC-13) and all FR-1..FR-13/NFR-1..NFR-6 have real, correctly-asserting test coverage. ./mvnw verify reproduced independently: unit tier Tests run: 281, Failures: 0; failsafe tier Tests run: 29, Failures: 0 (including CreateResourcesDatabaseServiceIT: 4/4 green, confirmed running under failsafe, not skipped). Scope honesty confirmed: only NotionPropertyType.java (additive URL member), NotionProvisioningAdapter.java (single case URL branch in propertyConfig), and CreateResourcesDatabaseService.java (stub replaced with real algorithm) changed in production code; NotionClient, NotionProvisioningPort signatures, WorkspaceLedgerWriter, and domain/resource/* confirmed untouched; URL type not retrofitted onto any other schema."
+    evidence: "docs/pipeline/create-resources-database/04-qa-report.md"
+    suspected_layer: null
+    proposes_decision: false
+    status: verified
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: "No fix required. Non-regression: full ./mvnw verify suite (unit 281, failsafe 29) green; changed-surface tests (CreateResourcesDatabaseServiceTest x17, CreateResourcesDatabaseServiceIT x4, NotionProvisioningAdapterDatabaseTest x20 incl. 2 new URL contract tests) all pass."
+
+  - id: QA-002
+    raised_by: spring-qa
+    stage: qa
+    severity: Low
+    symptom: "03-tech-spec.md:415 states NotionProvisioningAdapterDatabaseTest has 15 test methods total (13 existing + 2 new) after this branch's change, but the file independently counts 20 @Test methods (verified via grep -c). The tech-spec's stated pre-branch baseline of '13 existing' does not match the actual file content — a documentation/traceability staleness in the tech-spec narrative, not a missing or incorrect test. Both required URL-specific contract tests (createDatabase_postsUrlPropertyWithEmptyUrlConfig, repairShape_addsMissingUrlPropertyWithEmptyUrlConfig) are present and correctly assert the exact {\"type\":\"url\",\"url\":{}} shape."
+    evidence: "docs/pipeline/create-resources-database/03-tech-spec.md:415; backend/src/test/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapterDatabaseTest.java (20 @Test methods via grep -c)"
+    suspected_layer: tech-spec
+    proposes_decision: false
+    status: closed
+    owner: orchestrator
+    owner_history: [orchestrator]
+    target_artifacts: [docs/pipeline/create-resources-database/03-tech-spec.md]
+    resolution: "Fixed the doc staleness: corrected the three stale count statements in 03-tech-spec.md (lines ~415/506/525) from '15 (13 existing + 2 new)' to '20 (18 existing + 2 new)', matching the actual NotionProvisioningAdapterDatabaseTest method count. Documentation-only; no code change (the 2 required URL contract tests were already present and correct)."
+
+  - id: AUD-14
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Info/accepted: name-only shape verification does not detect a url->rich_text retype of the Resources 'URL' column. verify compares property-name presence only, never the Notion property type, so an out-of-band type change is not flagged as drift and is not repaired; the url type is only ever established at creation/add-missing, never reconciled to. Inherited from the shared name-only-verify adapter contract (AUD-08/ADR-0008); not reintroduced or worsened by the case URL branch or the service, and already documented and accepted in ADR-0013. No action for v0."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/resource/CreateResourcesDatabaseService.java:118-120; backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java:151-155,267"
+    citation: "docs/pipeline/create-resources-database/adr/ADR-0013-url-property-type.md (Consequences); reused create-projects-database/adr/ADR-0008 (name-only verification); OWASP ASVS v4.0.3 V1 (security requirements explicit and risk-based) - https://owasp.org/www-project-application-security-verification-standard/"
+    suspected_layer: architecture
+    proposes_decision: false
+    status: accepted
+    owner: architecture
+    owner_history: [architecture]
+    target_artifacts: [docs/pipeline/create-resources-database/adr/ADR-0013-url-property-type.md]
+    resolution: "Accepted, no code change. Inherited name-only-verify trade-off (won't detect a url->rich_text retype), documented in ADR-0013 and the accepted ADR-0008 contract. Reconcile-completeness tracked as a future feature."
+
+  - id: ADAPTER-AMBIGUITY-MSG
+    raised_by: orchestrator
+    stage: remediation
+    severity: Low
+    symptom: "The shared NotionProvisioningAdapter.findChildByIdentity throws NotionApiException with a hardcoded message 'Ambiguous Projects database identity: ...' on a >1 identity match. Because the method is generic across all child databases, this message reads 'Projects' even for Tasks/Knowledge/Habits/Journal/Resources FAILED outcomes — a misleading (cosmetic) error string, not a control-flow defect. Surfaced by the Resources auditor as an out-of-scope observation (the method was unchanged by this feature)."
+    evidence: "backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java:179"
+    citation: "General diagnostics quality — error messages should accurately identify the failing resource; no external authority needed."
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: orchestrator
+    owner_history: [orchestrator]
+    target_artifacts: [backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java, backend/src/test/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapterDatabaseTest.java]
+    resolution: "Fixed 2026-08-06: the >1-match message now derives its label from expected.title() — 'Ambiguous ' + expected.title() + ' database identity: ...' — so it names the actual database (Tasks/Knowledge/Habits/Journal/Resources/People) instead of hardcoding 'Projects'. This also makes the real adapter message match the per-database strings the service tests already mock. Non-regression test added: findChildByIdentity_ambiguityMessageNamesTheActualDatabaseNotProjects (uses a 'People' shape, asserts the message contains 'People' and not 'Projects'). ./mvnw verify green (adapter test 23, unit 312, failsafe 33, BUILD SUCCESS on Podman)."

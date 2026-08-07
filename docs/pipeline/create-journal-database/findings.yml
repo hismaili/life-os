@@ -1,0 +1,57 @@
+findings:
+  - id: QA-001
+    raised_by: spring-qa
+    stage: qa
+    severity: Low
+    symptom: "QA-PASS: Create Journal Database feature verified against 01-spec.md/02-architecture.md/03-tech-spec.md with zero violations. All 15 FRs and 10 NFRs have passing, directly-asserting tests; ./mvnw verify independently re-run (unit tier Tests run: 263, Failures: 0; failsafe tier Tests run: 25, Failures: 0, including CreateJournalDatabaseServiceIT 4/4); scope guard honored (only JournalEntry.java and CreateJournalDatabaseService.java changed in production; NotionPropertyType.DATE and the adapter's DATE branch confirmed pre-existing, not added by this feature); JournalEntry.title confirmed nullable/self-validating with content non-blank and timestamp-defaults-to-now invariants preserved."
+    evidence: "backend/src/test/java/com/lifeos/domain/journal/JournalEntryTest.java (8/8); backend/src/test/java/com/lifeos/application/usecase/journal/CreateJournalDatabaseServiceTest.java (17/17); backend/src/test/java/com/lifeos/application/usecase/journal/CreateJournalDatabaseServiceIT.java (4/4); docs/pipeline/create-journal-database/04-qa-report.md"
+    citation: null
+    suspected_layer: null
+    proposes_decision: false
+    status: closed
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: "No fix required — feature verified PASS on first QA pass; no non-regression test needed since no defect was found."
+  - id: AUD-12
+    raised_by: spring-auditor
+    stage: audit
+    severity: Info
+    symptom: "Name-only shape verification does not detect property-TYPE drift, including the Journal 'Date' column (date->text retype in Notion still returns PRESENT_MATCHING; no repair). Journal has no SELECT, so AUD-08/09 option-set concern is N/A — only the type dimension remains. Inherited from the shared adapter; not reintroduced or worsened by this service."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/journal/CreateJournalDatabaseService.java:112-116 (authors Date=NotionPropertyType.DATE; verification runs through unchanged out-of-scope NotionProvisioningAdapter.verify, name-presence-only per ADR-0008)"
+    citation: "Feature ADR-0012 (Consequences: verification is name-only); reused ../create-projects-database/adr/ADR-0008 (name-only verification as accepted contract); OWASP ASVS v4.0.3 V1 (security requirements explicit and risk-based) — https://owasp.org/www-project-application-security-verification-standard/"
+    suspected_layer: architecture
+    proposes_decision: false
+    status: accepted
+    owner: architecture
+    owner_history: [architecture]
+    target_artifacts: [docs/pipeline/create-projects-database/adr/ADR-0008-database-identity-verification-nondestructive-repair.md]
+    resolution: "Accepted, no code change. Info cross-reference to the accepted name-only-verify contract (ADR-0008); Journal adds no verification logic. Reconcile-completeness (incl. property-type drift) tracked as a future feature."
+  - id: AUD-13
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "JournalEntry declares a public @Builder, giving the application layer an alternate construction path that bypasses the self-validating create(...) factory — builder().content(null).workspaceId(null).build() (or minting a caller id) assembles an entity in a state create(...) forbids. The audited baseline Project/Task close this with @Builder(access=AccessLevel.PRIVATE). Pre-existing (not introduced by this change; the edit added the title field/param only) and shared with Area/Habit/Knowledge/Review/Resource; no current call site exploits it."
+    evidence: "backend/src/main/java/com/lifeos/domain/journal/JournalEntry.java:10 (public @Builder) vs backend/src/main/java/com/lifeos/domain/project/Project.java:11 and backend/src/main/java/com/lifeos/domain/task/Task.java:11 (@Builder(access = AccessLevel.PRIVATE))"
+    citation: "Effective Java, Item 15: Minimize the accessibility of classes and members; project CLAUDE.md convention (all-args builder reserved for repository reconstitution; application layer must never mint IDs or assemble an entity in an invalid state)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: [spring-implementer]
+    target_artifacts: [backend/src/main/java/com/lifeos/domain/journal/JournalEntry.java]
+    resolution: "Fixed on JournalEntry (the file this feature owns): @Builder -> @Builder(access = AccessLevel.PRIVATE), matching Project/Task/Goal and closing the un-validated construction back door. Safe: grep confirmed the factory's own create(...) is the only builder() caller (no prod/test call site used the public builder), and ./mvnw verify stayed green (compile-time proof) — failsafe 25/25, BUILD SUCCESS on Podman. NOTE: the same public-@Builder pattern remains on Area/Habit/Knowledge/Review/Resource (pre-existing, out of this feature's scope) — see BUILDER-SWEEP tracked follow-up."
+  - id: BUILDER-SWEEP
+    raised_by: orchestrator
+    stage: remediation
+    severity: Low
+    symptom: "Cross-cutting: Area, Habit, Knowledge, Review, and Resource domain aggregates still declare a public @Builder (un-validated construction back door around their create(...) factories), inconsistent with Person/Workspace/Project/Task/Goal/JournalEntry which use @Builder(access = AccessLevel.PRIVATE). Pre-existing tech debt spanning multiple aggregates; no current call site exploits it."
+    evidence: "backend/src/main/java/com/lifeos/domain/{area/Area,habit/Habit,knowledge/Knowledge,review/Review,resource/Resource}.java (public @Builder)"
+    citation: "Effective Java, Item 15; CLAUDE.md self-validating-domain convention"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: orchestrator
+    owner_history: [orchestrator]
+    target_artifacts: [backend/src/main/java/com/lifeos/domain/area/Area.java, backend/src/main/java/com/lifeos/domain/habit/Habit.java, backend/src/main/java/com/lifeos/domain/knowledge/Knowledge.java, backend/src/main/java/com/lifeos/domain/review/Review.java, backend/src/main/java/com/lifeos/domain/resource/Resource.java]
+    resolution: "Fixed 2026-08-06 in a dedicated cleanup pass: Area, Habit, Knowledge, Review, Resource changed to @Builder(access = AccessLevel.PRIVATE) (AccessLevel imported), matching Person/Workspace/Project/Task/Goal/JournalEntry. Safe: grep confirmed no external (prod/test) call site used any of the public builders — only each factory's own create(...) calls builder() internally; the private builders are compile-time enforced and ./mvnw verify stayed green (unit 312, failsafe 33, BUILD SUCCESS on Podman). All ten domain aggregates now use a private builder."

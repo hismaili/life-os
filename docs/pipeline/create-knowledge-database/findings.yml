@@ -1,0 +1,28 @@
+findings:
+  - id: QA-001
+    raised_by: spring-qa
+    stage: qa
+    severity: Low
+    symptom: "QA-PASS: no violations found. All 14 FRs and 10 NFRs of Create Knowledge Database are satisfied with correctly-asserting tests; ./mvnw verify is green on both tiers (unit 223/223, failsafe 17/17, incl. CreateKnowledgeDatabaseServiceTest 17/17 and CreateKnowledgeDatabaseServiceIT 4/4); scope-honesty check confirms only CreateKnowledgeDatabaseService.java changed in production (adapter/port/WorkspaceLedgerWriter/domain/knowledge untouched, confirmed by file-modification timestamps and content re-read)."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/knowledge/CreateKnowledgeDatabaseService.java; backend/src/test/java/com/lifeos/application/usecase/knowledge/CreateKnowledgeDatabaseServiceTest.java; backend/src/test/java/com/lifeos/application/usecase/knowledge/CreateKnowledgeDatabaseServiceIT.java; docs/pipeline/create-knowledge-database/04-qa-report.md"
+    suspected_layer: na
+    proposes_decision: false
+    status: closed
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: "No fix required. QA verified acceptance criteria, design conformance, and test adequacy; verdict PASS with zero violations."
+  - id: KNOW-AUD-01
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "AUDIT-PASS (Info): clean mirror, zero new findings. CreateKnowledgeDatabaseService is a faithful, correct mirror of the audited CreateTasksDatabaseService — identical outcome mapping, ledger own-transaction (only WorkspaceLedgerWriter.record is transactional), no @Transactional on the HTTP-bound execute, token never logged/serialized/in exceptions or ProvisioningStepResult.detail (all detail values fixed literals/null), >1-identity-match NotionApiException propagated before any ledger write, adoption-before-create never-duplicate guarantee, and no comment pollution. Sole divergence is the two-property spec (Title TITLE + Content RICH_TEXT, no domain-enum/SELECT) which conforms to ADR-0010 and lowers risk vs the baseline; the AUD-08/AUD-09 name-only-verify option-set-drift trade-off is inapplicable (Knowledge has no closed-value property). No page-body scope creep. 0 Critical / 0 High / 0 Medium / 0 Low; no blocking issues."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/knowledge/CreateKnowledgeDatabaseService.java:38-121; backend/src/test/java/com/lifeos/application/usecase/knowledge/CreateKnowledgeDatabaseServiceTest.java:245-289; backend/src/test/java/com/lifeos/application/usecase/knowledge/CreateKnowledgeDatabaseServiceIT.java:96-137"
+    citation: "adr/ADR-0010 (Content = Notion rich_text property, no page body); OWASP ASVS v4.0.3 §V7.1 (Log Content — no secrets in logs) and §V7.4 (controlled error handling) — owasp.org/www-project-application-security-verification-standard/; Spring Framework Reference — Data Access, Transaction Management (docs.spring.io/spring-framework/reference/data-access/transaction.html); prior approved audits ../create-tasks-database/05-audit-report.md and ../create-projects-database/05-audit-report.md"
+    suspected_layer: na
+    proposes_decision: false
+    status: closed
+    owner: null
+    owner_history: []
+    target_artifacts: []
+    resolution: "No fix required. Auditor re-audited the sole changed production surface (CreateKnowledgeDatabaseService.java) and its two tests; verdict Approve with zero new findings. Recorded so the ledger explicitly reflects a completed, zero-finding audit."

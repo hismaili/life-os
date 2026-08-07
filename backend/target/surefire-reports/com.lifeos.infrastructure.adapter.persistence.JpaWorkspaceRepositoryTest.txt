@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.lifeos.infrastructure.adapter.persistence.JpaWorkspaceRepositoryTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.187 s -- in com.lifeos.infrastructure.adapter.persistence.JpaWorkspaceRepositoryTest

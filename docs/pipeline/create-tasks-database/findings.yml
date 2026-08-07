@@ -1,0 +1,50 @@
+# Findings ledger — Create Tasks Database feature.
+# QA (spring-qa) recorded a PASS with zero violations (mirrors create-projects-database's
+# QA-PASS convention).
+findings:
+  # QA stage (spring-qa) review of the "Create Tasks Database" feature.
+  # Verdict: PASS. Independently re-ran `./mvnw verify` (Podman env exported per
+  # 00-preflight.md): unit tier 207/207 green (incl. CreateTasksDatabaseServiceTest
+  # 17/17), failsafe tier 13/13 green (incl. CreateTasksDatabaseServiceIT 4/4,
+  # confirmed running under Failsafe, not skipped). Every FR-1..14 and NFR-1..10
+  # has a directly-asserting test (see 04-qa-report.md §3). Scope-honesty check
+  # (04-qa-report.md §4, via file mtimes) confirmed only CreateTasksDatabaseService.java
+  # + its two test files were touched; NotionProvisioningAdapter, NotionProvisioningPort,
+  # WorkspaceLedgerWriter, Task, and TaskStatus are unmodified. No violations or
+  # coverage gaps found.
+  - id: QA-PASS
+    raised_by: spring-qa
+    stage: qa
+    severity: null
+    status: na
+    na_reason: "QA found zero violations/gaps — see docs/pipeline/create-tasks-database/04-qa-report.md for the full PASS verdict, test-run evidence, acceptance-criteria matrix, and scope-honesty check."
+
+  # Audit stage (spring-auditor) review of the "Create Tasks Database" feature.
+  # Verdict: APPROVE. Scope: CreateTasksDatabaseService.java + its two test files only
+  # (the sole production change). Verified faithful mirror of the audited
+  # CreateProjectsDatabaseService: identical outcome mapping, >1-match => FAILED
+  # propagation (both cold and warm-ABSENT paths, verifyNoInteractions(ledger)),
+  # ledger own-transaction reused, no @Transactional on the HTTP-bound execute
+  # (reflectively asserted), token confined (detail = fixed literals, logs carry
+  # only ids/outcomes), no NPE path reintroduced, never-duplicate preserved
+  # (adoption-before-create + upsert; IT converges to one row across 3 reruns).
+  # TaskStatus reused as a closed enum, options seeded via Enum::name (ADR-0009,
+  # accepted). Divergences from Projects (Enum::name vs displayName; "Title" vs
+  # "Name") are the exact intended ADR-0009/tech-spec-§2 decisions, not defects.
+  # Severity counts: Critical 0, High 0, Medium 0, Low 0, Info 1. Blocking: 0.
+  # Full report: docs/pipeline/create-tasks-database/05-audit-report.md.
+  - id: AUD-09
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Name-only shape verify does not detect Tasks 'Status' select option-set or property-type drift (select->text retype or option edits still verify as PRESENT_MATCHING); inherited from the shared unchanged adapter, same accepted trade-off as Projects AUD-08 — not reintroduced or worsened by this service. Tracked as Info-level cross-reference."
+    evidence: "backend/src/main/java/com/lifeos/application/usecase/task/CreateTasksDatabaseService.java:115-121"
+    citation: "adr/ADR-0009-taskstatus-select-option-labels.md (Consequences); reused create-projects-database/adr/ADR-0008 (name-only verify); OWASP ASVS v4.0.3 V1 — https://owasp.org/www-project-application-security-verification-standard/"
+    suspected_layer: architecture
+    proposes_decision: false
+    status: accepted
+    owner: architecture
+    owner_history: [architecture]
+    target_artifacts: [docs/pipeline/create-projects-database/adr/ADR-0008-database-identity-verification-nondestructive-repair.md]
+    resolution: "Accepted, no code change. Info-level cross-reference to the already-accepted Projects AUD-08: name-only verify/repair is the intended v0 contract (ADR-0008) that keeps repair non-destructive. Behavior lives in the shared unchanged adapter — not reintroduced or worsened by CreateTasksDatabaseService. Reconcile-completeness tracked as a future feature."
+    resolution: null

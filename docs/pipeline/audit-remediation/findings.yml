@@ -1,0 +1,191 @@
+# Findings ledger for docs/pipeline/audit-remediation
+# Per spring-boot-team:spring-findings-protocol.
+#
+# QA pass (spring-qa, stage: qa) found zero violations / coverage gaps against
+# 01-spec.md, 02-architecture.md, 03-tech-spec.md and the implemented code under
+# backend/src/. All FR-1..FR-8, AUD-004, and AUD-005 acceptance criteria verified
+# PASS with cited file:line/test evidence (see 04-qa-report.md). Fast (`mvn test`,
+# 332 tests) and full (`mvn verify`, 332 + 33 IT tests) suites are green with no
+# failures/errors — NFR-5 satisfied, no regressions.
+#
+# Final-gate re-audit (spring-auditor, stage: audit, see 05-audit-report.md):
+# all ten targeted original findings CONFIRMED CLOSED against the code (below);
+# two new Low findings introduced by the remediation are routed back (AUD-101, AUD-102).
+#
+# Scoped remediation re-audit (spring-auditor, stage: audit, 2026-08-07): AUD-101 and
+# AUD-102 remediated in CreateWorkspaceService.safeDetail and CONFIRMED CLOSED with
+# non-regression tests; no new defect introduced by the change (see 05-audit-report.md
+# "Remediation re-audit" section).
+
+findings:
+  # ---- verified-closed originals (changed-surface re-audit confirmed) ----
+  - id: NOTION-AUD-001
+    raised_by: spring-auditor
+    stage: audit
+    severity: High
+    symptom: "Notion token could be rendered in NotionProperties string representation (toString/interpolation/binding-error)"
+    evidence: "NotionProperties.java:15-22; NotionPropertiesTest.toString_redactsTokenToFixedMarker; NotionProvisioningAdapterTest.client_neverLeaksTokenInExceptionMessage"
+    citation: "OWASP Cheat Sheet Series — Logging (never log secrets); OWASP ASVS v4.0 V7; Effective Java Item 12"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProperties.java"]
+    resolution: "Explicit toString() renders token as fixed '****' marker; token() still returns raw value for Bearer header only. Non-regression: NotionPropertiesTest + adapter hasMessageNotContaining(TOKEN)/(\"Bearer\") assertions."
+  - id: NOTION-AUD-002
+    raised_by: spring-auditor
+    stage: audit
+    severity: Medium
+    symptom: "Adapter dereferenced data_sources.get(0) and data-source properties() without null/empty guards"
+    evidence: "NotionProvisioningAdapter.java:50-63,177-179,232-234; NotionProvisioningAdapterDatabaseTest.verify_throwsNotionApiExceptionWhenDataSources{Empty,Absent}/...Returns404"
+    citation: "Effective Java Item 54 (return empty collections, not null); OWASP ASVS v4.0 V7 (robust error handling)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java"]
+    resolution: "requirePrimaryDataSourceId / requireDataSource fail-closed to NotionApiException; no NPE/IndexOutOfBounds escapes the adapter. Non-regression: 4 guard tests in NotionProvisioningAdapterDatabaseTest."
+  - id: NOTION-AUD-003
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Pagination loops unbounded on repeating has_more/next_cursor and could NPE on null results()"
+    evidence: "NotionProvisioningAdapter.java:40,65-67,122-124,195-197; NotionProvisioningAdapterTest.findRootByIdentity_{throwsWhenSearchExceedsPageCap,treatsNullResultsAsEmptyPage}"
+    citation: "OWASP ASVS v4.0 V7; Effective Java Item 54 (empty, not null)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java"]
+    resolution: "MAX_SEARCH_PAGES=50 cap throws NotionApiException; nullSafe(results()) defaults null to empty list. Non-regression: page-cap + null-results tests for both findRoot and findChild."
+  - id: NOTION-AUD-006
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Local Map 'properties' in createDatabase shadowed the NotionProperties field"
+    evidence: "NotionProvisioningAdapter.java:155 (renamed to propertyConfigs)"
+    citation: "Effective Java Item 57 (minimize scope of local variables / avoid shadowing)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionProvisioningAdapter.java"]
+    resolution: "Local renamed to propertyConfigs; no ambiguous field/local resolution remains. Non-regression: existing NotionProvisioningAdapterDatabaseTest unchanged/green."
+  - id: NOTION-AUD-007
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Magic HTTP status literals 404/429/529 in NotionClient"
+    evidence: "NotionClient.java:23,53,86"
+    citation: "Spring Framework — org.springframework.http.HttpStatus (NOT_FOUND, TOO_MANY_REQUESTS)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/infrastructure/adapter/notion/NotionClient.java"]
+    resolution: "HttpStatus.NOT_FOUND.value()/TOO_MANY_REQUESTS.value() plus named NOTION_OVERLOADED=529 constant. Behavior-preserving. Non-regression: NotionClientTest status tests green."
+  - id: CLI-AUD-001
+    raised_by: spring-auditor
+    stage: audit
+    severity: Medium
+    symptom: "Registration test was a reflective @CommandScan-annotation-presence tautology"
+    evidence: "WorkspaceCommandsRegistrationTest.commandScan_discoversAndDependencyInjectsWorkspaceCommands"
+    citation: "JUnit 5 docs (assertion discipline — test real behavior); NFR-3"
+    suspected_layer: test
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/test/java/com/lifeos/infrastructure/adapter/cli/WorkspaceCommandsRegistrationTest.java"]
+    resolution: "Rewritten to boot a real @CommandScan AnnotationConfigApplicationContext and assert bean registration + constructor DI (honest claim). Non-regression: test present and green."
+  - id: CLI-AUD-002
+    raised_by: spring-auditor
+    stage: audit
+    severity: Medium
+    symptom: "No test exercised Spring Shell parsing/defaulting/exit; a mislabelled test claimed default resolution via direct Java call"
+    evidence: "WorkspaceCommandsShellTest (real Shell + NonInteractiveShellRunner); mislabelled create_defaultsSampleDataToFalseWhenOmitted removed"
+    citation: "Spring Shell Reference — Testing; NFR-3 test discipline"
+    suspected_layer: test
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/test/java/com/lifeos/infrastructure/adapter/cli/WorkspaceCommandsShellTest.java","backend/src/test/java/com/lifeos/infrastructure/adapter/cli/WorkspaceCommandsTest.java"]
+    resolution: "Shell-level test drives real Shell: required-option rejection (CommandParserExceptionsException + verifyNoInteractions), --sample-data default via captured command, failure propagation. Mislabelled direct-call default test deleted."
+  - id: CLI-AUD-003
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "CommandFailedException carried the full multi-line report as its message"
+    evidence: "WorkspaceCommands.java:35,54-63; WorkspaceCommandsTest.create_writesFullReportToTerminalOnFailureBeforeThrowing"
+    citation: "OWASP ASVS v4.0 V7.4.1 (concise error surfacing); Spring Shell Reference — Exception Handling"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/infrastructure/adapter/cli/WorkspaceCommands.java"]
+    resolution: "conciseFailureSummary() gives 'N of M provisioning steps failed: <labels>'; full report still written to terminal on the failure path before throwing. Non-regression: 2 WorkspaceCommandsTest cases."
+  - id: CLI-AUD-004
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Raw downstream Exception.getMessage() surfaced verbatim to the CLI (improper error handling)"
+    evidence: "CreateWorkspaceService.java:92-106; CreateWorkspaceServiceTest.execute_{collapsesUnexpectedExceptionToGenericSafeDetail,logsRawCauseAtErrorForFailedStep}"
+    citation: "OWASP ASVS v4.0 V7.4.1 (generic error to user, detail logged server-side); OWASP Cheat Sheet Series — Error Handling"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/application/usecase/workspace/CreateWorkspaceService.java","backend/src/main/java/com/lifeos/application/usecase/workspace/SafeToSurfaceException.java"]
+    resolution: "runStep logs raw throwable at ERROR; safeDetail passes SafeToSurfaceException/UnsupportedOperationException messages, collapses all else to a generic detail. Marker interface keeps app->adapter dependency inward (ADR-0013 alternative). Non-regression: 3 service tests."
+  - id: CLI-AUD-005
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Domain enum ProvisionedResourceType rendered verbatim (TASKS_DB) in CLI output"
+    evidence: "ResourceTypeLabel.java:10-27; WorkspaceCommandsTest.create_rendersHumanReadableLabelsNotRawEnumConstants"
+    citation: "Effective Java Item 34 (enum name is an identifier, not display text); Clean Architecture layer separation"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/infrastructure/adapter/cli/ResourceTypeLabel.java"]
+    resolution: "Exhaustive enum->label switch (all 14 constants) in the CLI adapter; domain enum unchanged/presentation-free. See AUD-101 for a residual leak of the enum name in the sanitized detail text."
+
+  # ---- new findings from the final-gate re-audit (routed back) ----
+  - id: AUD-101
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "Sanitized generic detail interpolates the raw enum constant (e.g. 'internal error during TASKS_DB provisioning'), re-introducing the enum name into operator-facing CLI text that AUD-005 removed from the step label"
+    evidence: "CreateWorkspaceService.java:105 (rendered via WorkspaceCommands.java:46-48; asserted at CreateWorkspaceServiceTest.java:341)"
+    citation: "Effective Java Item 34 (enum name/default toString is an identifier, not display text)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/application/usecase/workspace/CreateWorkspaceService.java"]
+    resolution: "safeDetail no longer interpolates the enum: it returns a constant GENERIC_FAILURE_DETAIL='internal error during provisioning (see server logs)' (CreateWorkspaceService.java:101,108) with no type token, and the 'type' parameter was dropped from the safeDetail signature. Raw cause + type are still logged server-side at ERROR (:96). Non-regression: CreateWorkspaceServiceTest.execute_collapsesUnexpectedExceptionToGenericSafeDetail asserts detail equals the constant AND doesNotContain('TASKS_DB')/('jdbc')/('internal-host') (:341-344). Scoped re-audit 2026-08-07 CONFIRMED CLOSED."
+  - id: AUD-102
+    raised_by: spring-auditor
+    stage: audit
+    severity: Low
+    symptom: "safeDetail returns e.getMessage() unguarded for SafeToSurfaceException/UnsupportedOperationException; a null/blank message would trip ProvisioningStepResult's non-blank FAILED-detail invariant, throwing IllegalArgumentException inside the catch block and letting it escape execute() — breaking the per-step fail-closed contract"
+    evidence: "CreateWorkspaceService.java:102-103 (catch at 95-98); ProvisioningStepResult.java:9-12"
+    citation: "Effective Java Item 77 (don't ignore exceptions) / Item 54 (defensive handling of possibly-null returns)"
+    suspected_layer: impl
+    proposes_decision: false
+    status: closed
+    owner: spring-implementer
+    owner_history: []
+    target_artifacts: ["backend/src/main/java/com/lifeos/application/usecase/workspace/CreateWorkspaceService.java"]
+    resolution: "safeDetail now coalesces a null/blank curated message to the non-blank GENERIC_FAILURE_DETAIL constant (CreateWorkspaceService.java:104-107), so a FAILED ProvisioningStepResult can never receive a null/blank detail and the compact-constructor invariant cannot trip inside the catch. Non-regression: CreateWorkspaceServiceTest.execute_fallsBackToGenericDetailWhenSafeToSurfaceExceptionHasNoMessage throws new NotionApiException((String) null) (a SafeToSurfaceException) and asserts outcome FAILED + detail equals the fallback with no exception escaping execute() (:347-366). Scoped re-audit 2026-08-07 CONFIRMED CLOSED."
