@@ -98,16 +98,23 @@ image runs the app headless (`SPRING_SHELL_INTERACTIVE_ENABLED=false`) so it ser
 instead of opening an interactive shell prompt.
 
 The root-level `docker-compose.yml` runs the app plus a disposable Postgres, using the compose
-spec only (no Docker-specific extensions) so it works with either Podman or Docker:
+spec only (no Docker-specific extensions) so it works with either Podman or Docker. Postgres auth
+is TLS client-certificate only (see `postgres/pg_hba.conf`) — there is no password fallback, so
+generate a dev CA/server/client cert chain once before bringing the stack up:
 
 ```bash
 cp .env.example .env   # fill in NOTION_TOKEN / NOTION_ROOT_PARENT_PAGE_ID
+./scripts/generate-dev-certs.sh
 podman-compose up --build
 ```
 
+Re-run `generate-dev-certs.sh` any time to rotate the certs (it regenerates the whole chain from
+scratch). Changing `POSTGRES_USER` also requires re-running it, since Postgres maps the client
+cert's CN directly to the role — see the script's header comment for details.
+
 `docker-compose.prod.yml` is the CD counterpart: a standalone file that pulls a pre-built image
-(`IMAGE=ghcr.io/<owner>/lifeos-backend:<tag>`) rather than building from source — see
-`.github/workflows/cd.yml`.
+(`IMAGE=ghcr.io/<owner>/lifeos-backend:<tag>`) rather than building from source, and expects a
+*real* (non-dev) cert chain at `CERTS_DIR` — see `.github/workflows/cd.yml`.
 
 ## CI/CD
 
