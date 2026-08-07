@@ -146,3 +146,30 @@ option or REST body), not through `.env`.
 - `.github/workflows/cd.yml` — **placeholder**, manual-dispatch only until an Oracle Cloud VM and
   its SSH/registry secrets are configured. See the workflow file's header comment for the exact
   secrets it expects.
+
+## Desktop app
+
+The CLI can be packaged as an installable double-clickable app via
+[jpackage](https://docs.oracle.com/en/java/javase/21/jpackage/) (bundled with the JDK, no extra
+tooling). Double-clicking the installed app opens a terminal window running the same Spring Shell
+`shell:>` prompt as `java -jar` — packaging changes nothing about how the CLI behaves or what it
+needs (a reachable Postgres via `SPRING_DATASOURCE_*`, a Notion token per `workspace create` call —
+see above); it only changes how you launch it.
+
+**macOS** — built and verified locally on real hardware:
+
+```bash
+./desktop/macos/package.sh
+```
+
+Produces `desktop/build/macos/LifeOS.app` and `LifeOS.dmg`. jpackage's native launcher has no TTY
+when double-clicked from Finder, so the app's actual entry point is a `.command` file (macOS's
+built-in "run this shell script in Terminal.app" file type — no special permission needed, unlike
+scripting Terminal via AppleScript). See the script's comments for the exact mechanics. The build
+is unsigned: right-click → Open once to get past Gatekeeper's "unidentified developer" warning.
+
+**Windows (.msi) and Linux (.deb)** — configured in `.github/workflows/package-desktop.yml`
+(manual dispatch) but **not yet verified on real hardware**, unlike the macOS path above. Windows
+uses `--win-console` for native terminal behavior; Linux best-effort-patches the generated
+`.desktop` launcher to set `Terminal=true`. Expect to debug on first run — see the workflow's
+per-job comments for the specific known risk in each.

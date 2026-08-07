@@ -1,0 +1,146 @@
+name: Package desktop app
+
+# Manual-dispatch only. The macOS leg reuses desktop/macos/package.sh, which
+# has been built and run end-to-end on real macOS hardware (see that
+# script's comments). The Windows and Linux legs below are configured but
+# UNVERIFIED — nobody has run them yet. Expect to debug on first run; see
+# the per-job notes for the specific known risk in each.
+on:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    name: macOS (.app / .dmg)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - run: ./desktop/macos/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LifeOS-macos
+          path: |
+            desktop/build/macos/LifeOS.app
+            desktop/build/macos/LifeOS.dmg
+          if-no-files-found: error
+
+  windows:
+    name: Windows (.msi)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Build the backend jar
+        working-directory: backend
+        run: ./mvnw -B clean package -DskipTests
+        shell: bash
+
+      # KNOWN RISK: jpackage (as shipped with JDK 21) needs the WiX Toolset
+      # v3 CLI specifically — v4 changed its command structure and isn't
+      # supported. windows-latest doesn't preinstall either. If this step
+      # starts failing, check whether choco's default `wixtoolset` package
+      # has moved to v4 and pin an explicit v3.x version instead.
+      - name: Install WiX Toolset v3
+        run: choco install wixtoolset -y
+        shell: pwsh
+
+      - name: Stage the jar
+        run: |
+          New-Item -ItemType Directory -Force -Path desktop\build\staging | Out-Null
+          Copy-Item (Get-ChildItem backend\target\lifeos-backend-*.jar | Where-Object { $_.Name -notlike '*.original' } | Select-Object -First 1) desktop\build\staging\
+        shell: pwsh
+
+      - name: Run jpackage
+        run: |
+          $jar = Get-ChildItem desktop\build\staging\*.jar | Select-Object -First 1
+          jpackage `
+            --type msi `
+            --name LifeOS `
+            --app-version 1.0.0 `
+            --input desktop\build\staging `
+            --main-jar $jar.Name `
+            --dest desktop\build\windows `
+            --win-console
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LifeOS-windows
+          path: desktop/build/windows/*.msi
+          if-no-files-found: error
+
+  linux:
+    name: Linux (.deb)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Build the backend jar
+        working-directory: backend
+        run: ./mvnw -B clean package -DskipTests
+
+      - name: Stage the jar
+        run: |
+          mkdir -p desktop/build/staging
+          jar="$(find backend/target -maxdepth 1 -name 'lifeos-backend-*.jar' ! -name '*.original' | head -1)"
+          cp "$jar" desktop/build/staging/
+
+      - name: Run jpackage
+        run: |
+          jar="$(basename desktop/build/staging/*.jar)"
+          jpackage \
+            --type deb \
+            --name LifeOS \
+            --app-version 1.0.0 \
+            --input desktop/build/staging \
+            --main-jar "$jar" \
+            --dest desktop/build/linux \
+            --linux-shortcut
+
+      # KNOWN RISK: unverified. jpackage's --linux-shortcut generates a
+      # .desktop launcher, but there's no jpackage flag to make it open a
+      # terminal (the macOS/Windows legs get that natively — a .command
+      # file and --win-console respectively). This unpacks the .deb, sets
+      # Terminal=true on the generated .desktop entry, and repacks it. If
+      # the .desktop file's path/contents don't match what's assumed here,
+      # this step is the first thing to fix.
+      - name: Make the .desktop launcher open a terminal
+        run: |
+          set -euo pipefail
+          deb="$(find desktop/build/linux -maxdepth 1 -name '*.deb' | head -1)"
+          workdir="$(mktemp -d)"
+          dpkg-deb -R "$deb" "$workdir"
+          desktop_file="$(find "$workdir" -name '*.desktop' | head -1)"
+          if [ -z "$desktop_file" ]; then
+            echo "No .desktop file found in the .deb — jpackage's output layout may have changed." >&2
+            exit 1
+          fi
+          if grep -q '^Terminal=' "$desktop_file"; then
+            sed -i 's/^Terminal=.*/Terminal=true/' "$desktop_file"
+          else
+            echo 'Terminal=true' >> "$desktop_file"
+          fi
+          dpkg-deb -b "$workdir" "$deb"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LifeOS-linux
+          path: desktop/build/linux/*.deb
+          if-no-files-found: error
