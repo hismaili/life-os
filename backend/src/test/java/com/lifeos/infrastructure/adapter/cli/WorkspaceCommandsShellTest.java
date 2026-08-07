@@ -154,7 +154,8 @@ class WorkspaceCommandsShellTest {
         contextRunner(terminal, createWorkspace).run(context -> {
             Shell shell = context.getBean(Shell.class);
 
-            run(shell, "workspace", "create", "--name", "Personal", "--person-id", personId.toString());
+            run(shell, "workspace", "create", "--name", "Personal", "--person-id", personId.toString(),
+                    "--notion-token", "notion-token", "--notion-root-parent-page-id", "root-id");
 
             ArgumentCaptor<CreateWorkspaceCommand> captor = ArgumentCaptor.forClass(CreateWorkspaceCommand.class);
             verify(createWorkspace).execute(captor.capture());
@@ -174,7 +175,8 @@ class WorkspaceCommandsShellTest {
         contextRunner(terminal, createWorkspace).run(context -> {
             Shell shell = context.getBean(Shell.class);
 
-            assertThatThrownBy(() -> run(shell, "workspace", "create", "--name", "Personal", "--person-id", personId.toString()))
+            assertThatThrownBy(() -> run(shell, "workspace", "create", "--name", "Personal", "--person-id", personId.toString(),
+                    "--notion-token", "notion-token", "--notion-root-parent-page-id", "root-id"))
                     .isInstanceOf(CommandFailedException.class)
                     .hasMessage("1 of 1 provisioning steps failed: Dashboard");
 

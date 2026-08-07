@@ -23,7 +23,8 @@ public class WorkspaceController {
     @PostMapping
     public ResponseEntity<ProvisioningReportResponse> create(@Valid @RequestBody CreateWorkspaceRequest request) {
         ProvisioningReport report = createWorkspace.execute(
-                new CreateWorkspaceCommand(request.name(), request.personId(), request.sampleData()));
+                new CreateWorkspaceCommand(request.name(), request.personId(), request.sampleData(),
+                        request.notionToken(), request.notionRootParentPageId()));
 
         if (report.failed()) {
             throw new WorkspaceProvisioningFailedException(report);

@@ -46,7 +46,7 @@ class WorkspaceControllerTest {
 
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.workspaceId").value(workspaceId.toString()))
                 .andExpect(jsonPath("$.steps[0].type").value("DASHBOARD"));
@@ -59,7 +59,7 @@ class WorkspaceControllerTest {
 
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(status().isOk());
     }
 
@@ -67,7 +67,7 @@ class WorkspaceControllerTest {
     void create_returns400ProblemDetailOnBlankName() throws Exception {
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
                 .andExpect(jsonPath("$.title").exists());
@@ -89,7 +89,7 @@ class WorkspaceControllerTest {
 
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.workspaceId").value(workspaceId.toString()))
                 .andExpect(jsonPath("$.steps").exists());
@@ -103,7 +103,7 @@ class WorkspaceControllerTest {
 
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.steps[0].type").value("DASHBOARD"))
                 .andExpect(jsonPath("$.steps[0].outcome").value("FAILED"))
@@ -117,7 +117,7 @@ class WorkspaceControllerTest {
 
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
                 .andExpect(content().string(not(containsString("duplicate key"))));
@@ -129,7 +129,7 @@ class WorkspaceControllerTest {
 
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
                 .andExpect(content().string(not(containsString("secret internal detail"))));
@@ -142,9 +142,21 @@ class WorkspaceControllerTest {
 
         mockMvc.perform(post("/api/workspaces")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false))))
+                        .content(objectMapper.writeValueAsString(new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id"))))
                 .andExpect(jsonPath("$.name").doesNotExist())
                 .andExpect(jsonPath("$.personId").doesNotExist())
                 .andExpect(jsonPath("$.resources").doesNotExist());
+    }
+
+    @Test
+    void create_neverEchoesTheSuppliedNotionTokenInResponse() throws Exception {
+        when(createWorkspace.execute(any())).thenReturn(new ProvisioningReport(workspaceId, List.of(
+                new ProvisioningStepResult(ProvisionedResourceType.DASHBOARD, ProvisioningOutcome.CREATED, null))));
+
+        mockMvc.perform(post("/api/workspaces")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(
+                                new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "super-secret-token", "root-id"))))
+                .andExpect(content().string(not(containsString("super-secret-token"))));
     }
 }

@@ -44,11 +44,11 @@ class WorkspaceCommandsTest {
         when(createWorkspace.execute(any())).thenReturn(new ProvisioningReport(workspaceId, List.of(
                 new ProvisioningStepResult(ProvisionedResourceType.DASHBOARD, ProvisioningOutcome.CREATED, null))));
 
-        commands.create("Personal", personId, true);
+        commands.create("Personal", personId, true, "notion-token", "root-id");
 
         ArgumentCaptor<CreateWorkspaceCommand> captor = ArgumentCaptor.forClass(CreateWorkspaceCommand.class);
         verify(createWorkspace).execute(captor.capture());
-        assertThat(captor.getValue()).isEqualTo(new CreateWorkspaceCommand("Personal", personId, true));
+        assertThat(captor.getValue()).isEqualTo(new CreateWorkspaceCommand("Personal", personId, true, "notion-token", "root-id"));
     }
 
     @Test
@@ -58,7 +58,7 @@ class WorkspaceCommandsTest {
                 new ProvisioningStepResult(ProvisionedResourceType.DASHBOARD, ProvisioningOutcome.CREATED, null),
                 new ProvisioningStepResult(ProvisionedResourceType.TASKS_DB, ProvisioningOutcome.RECONCILED, null))));
 
-        String rendering = commands.create("Personal", personId, false);
+        String rendering = commands.create("Personal", personId, false, "notion-token", "root-id");
 
         assertThat(rendering).contains("Dashboard").contains("CREATED");
         assertThat(rendering).contains("Tasks").contains("RECONCILED");
@@ -70,7 +70,7 @@ class WorkspaceCommandsTest {
         when(createWorkspace.execute(any())).thenReturn(new ProvisioningReport(workspaceId, List.of(
                 new ProvisioningStepResult(ProvisionedResourceType.TASKS_DB, ProvisioningOutcome.CREATED, null))));
 
-        String rendering = commands.create("Personal", personId, false);
+        String rendering = commands.create("Personal", personId, false, "notion-token", "root-id");
 
         assertThat(rendering).contains("Tasks");
         assertThat(rendering).doesNotContain("TASKS_DB");
@@ -83,7 +83,7 @@ class WorkspaceCommandsTest {
                 new ProvisioningStepResult(ProvisionedResourceType.DASHBOARD, ProvisioningOutcome.FAILED, "boom"))));
         when(terminal.writer()).thenReturn(new PrintWriter(new StringWriter()));
 
-        assertThatThrownBy(() -> commands.create("Personal", personId, false))
+        assertThatThrownBy(() -> commands.create("Personal", personId, false, "notion-token", "root-id"))
                 .isInstanceOf(CommandFailedException.class)
                 .hasMessage("1 of 1 provisioning steps failed: Dashboard");
     }
@@ -96,7 +96,7 @@ class WorkspaceCommandsTest {
         StringWriter buffer = new StringWriter();
         when(terminal.writer()).thenReturn(new PrintWriter(buffer));
 
-        assertThatThrownBy(() -> commands.create("Personal", personId, false))
+        assertThatThrownBy(() -> commands.create("Personal", personId, false, "notion-token", "root-id"))
                 .isInstanceOf(CommandFailedException.class);
 
         assertThat(buffer.toString()).contains("Dashboard: FAILED (boom)");

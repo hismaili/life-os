@@ -1,9 +1,12 @@
 package com.lifeos.infrastructure.adapter.notion;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lifeos.application.port.NotionCredentials;
+import com.lifeos.application.port.NotionCredentialsHolder;
 import com.lifeos.application.port.PageShape;
 import com.lifeos.application.port.ParentConstraint;
 import com.lifeos.application.port.VerificationResult;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -36,8 +39,14 @@ class NotionProvisioningAdapterTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        NotionProperties properties = new NotionProperties(TOKEN, "2026-03-11", ROOT_PARENT_ID);
+        NotionProperties properties = new NotionProperties("2026-03-11");
         adapter = new NotionProvisioningAdapter(properties, builder, new ObjectMapper());
+        NotionCredentialsHolder.set(new NotionCredentials(TOKEN, ROOT_PARENT_ID));
+    }
+
+    @AfterEach
+    void tearDown() {
+        NotionCredentialsHolder.clear();
     }
 
     @Test

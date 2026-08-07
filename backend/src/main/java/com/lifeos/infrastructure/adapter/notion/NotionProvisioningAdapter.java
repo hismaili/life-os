@@ -3,6 +3,7 @@ package com.lifeos.infrastructure.adapter.notion;
 import com.lifeos.application.port.DatabaseSpec;
 import com.lifeos.application.port.ExpectedShape;
 import com.lifeos.application.port.FormulaSpec;
+import com.lifeos.application.port.NotionCredentialsHolder;
 import com.lifeos.application.port.NotionProvisioningPort;
 import com.lifeos.application.port.PageShape;
 import com.lifeos.application.port.PropertyDefinition;
@@ -68,8 +69,9 @@ public class NotionProvisioningAdapter implements NotionProvisioningPort {
 
     @Override
     public String createRootPage(PageShape expected) {
+        String rootParentPageId = NotionCredentialsHolder.require().rootParentPageId();
         Map<String, Object> body = Map.of(
-                "parent", Map.of("page_id", properties.rootParentPageId()),
+                "parent", Map.of("page_id", rootParentPageId),
                 "properties", Map.of("title", titlePropertyBody(expected.title())));
         NotionPageResponse response = client.post("/pages", body, NotionPageResponse.class);
         return response.id();
@@ -81,7 +83,7 @@ public class NotionProvisioningAdapter implements NotionProvisioningPort {
         if (response == null || response.archived() || response.inTrash()) {
             return VerificationResult.ABSENT;
         }
-        if (!properties.rootParentPageId().equals(parentPageId(response))) {
+        if (!NotionCredentialsHolder.require().rootParentPageId().equals(parentPageId(response))) {
             return VerificationResult.PRESENT_DRIFTED;
         }
         if (!titleOf(response).equals(expected.title())) {
@@ -92,6 +94,7 @@ public class NotionProvisioningAdapter implements NotionProvisioningPort {
 
     @Override
     public void repairPage(String pageId, PageShape expected) {
+        String rootParentPageId = NotionCredentialsHolder.require().rootParentPageId();
         NotionPageResponse current = client.get("/pages/{id}", NotionPageResponse.class, pageId);
         if (current == null) {
             throw new NotionApiException("Notion API error: page not found during repair (id=" + pageId + ")");
@@ -107,14 +110,15 @@ public class NotionProvisioningAdapter implements NotionProvisioningPort {
             client.patch("/pages/{id}", body, NotionPageResponse.class, pageId);
         }
 
-        if (!properties.rootParentPageId().equals(parentPageId(current))) {
-            Map<String, Object> body = Map.of("parent", Map.of("page_id", properties.rootParentPageId()));
+        if (!rootParentPageId.equals(parentPageId(current))) {
+            Map<String, Object> body = Map.of("parent", Map.of("page_id", rootParentPageId));
             client.post("/pages/{id}/move", body, NotionPageResponse.class, pageId);
         }
     }
 
     @Override
     public Optional<String> findRootByIdentity(PageShape expected) {
+        String rootParentPageId = NotionCredentialsHolder.require().rootParentPageId();
         List<NotionPageResponse> matches = new ArrayList<>();
         String cursor = null;
         int pages = 0;
@@ -133,7 +137,7 @@ public class NotionProvisioningAdapter implements NotionProvisioningPort {
             pages++;
             nullSafe(response.results()).stream()
                     .filter(result -> !result.archived() && !result.inTrash())
-                    .filter(result -> properties.rootParentPageId().equals(parentPageId(result)))
+                    .filter(result -> rootParentPageId.equals(parentPageId(result)))
                     .filter(result -> titleOf(result).equals(expected.title()))
                     .forEach(matches::add);
             cursor = response.hasMore() ? response.nextCursor() : null;
