@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>About — LifeOS</title>
+<meta name="description" content="What LifeOS is: a platform-agnostic domain model for your personal operating system, provisioned into Notion as one of its views instead of living as a template you keep rebuilding." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="pages.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__row">
+    <a class="wordmark" href="index.html">life<span class="wordmark__dot">.</span>os</a>
+    <a class="topbar__cta" href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">View source ↗</a>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">about lifeos</p>
+      <h1>A model of your life, not a template of it.</h1>
+      <p class="page-hero__lede">
+        LifeOS is a platform-agnostic domain model for a personal operating system. The model is
+        the product — Notion is just one view rendered on top of it.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap doc__body">
+
+      <h2><span class="doc__num">01 — the idea</span>The tool keeps changing. The structure shouldn't.</h2>
+      <p>
+        Most productivity systems <em>are</em> their tool. The moment you outgrow the tool — or it
+        raises its price, or you just want a change — the structure you carefully built goes with
+        it. How a habit connects to a goal, how a stray note becomes a project, why a given task
+        even exists: all of that lived only inside the app, and now it's gone.
+      </p>
+      <p>
+        LifeOS keeps the two apart on purpose. There's a real domain model underneath — with actual
+        invariants and actual relationships between Projects, Areas, Goals, Tasks, Habits, Knowledge,
+        Journal entries and People — and Notion is provisioned as <strong>one of its possible
+        views</strong>. If you ever leave Notion, the model doesn't leave with it.
+      </p>
+
+      <h2><span class="doc__num">02 — what's inside</span>One dashboard. Seven databases. Already related.</h2>
+      <p>
+        A single command builds the whole workspace under a Notion page you choose — the dashboard,
+        all seven databases, and the relations between them already wired:
+      </p>
+      <ul>
+        <li><strong>Projects</strong> — tied to the Area they serve, so purpose is one click away.</li>
+        <li><strong>Tasks</strong> — the actual work, always pointing back to its project.</li>
+        <li><strong>Knowledge</strong> — a Zettelkasten: notes that link to notes, not folders.</li>
+        <li><strong>Habits</strong> — recurring actions tracked as a loop with a real cadence.</li>
+        <li><strong>Journal</strong> — timestamped entries connected to what was happening that day.</li>
+        <li><strong>Resources</strong> — the links and docs you saved, attached to what they're for.</li>
+        <li><strong>People</strong> — because half your projects are really about a person.</li>
+      </ul>
+
+      <h2><span class="doc__num">03 — the methodologies</span>Nothing reinvented. Finally wired together.</h2>
+      <p>
+        The model encodes the methodologies you already half-remember from books you own but haven't
+        finished: <strong>GTD</strong> for capturing and reviewing everything that lands on you,
+        <strong>PARA</strong> for the Projects / Areas / Resources / Archive shape of things, a
+        <strong>Zettelkasten</strong> for linked notes, <strong>Atomic Habits'</strong>
+        identity-based habit loop, and <strong>OKRs</strong> for goals that get reviewed instead of
+        written once and forgotten. Nothing invented — just stopped fighting each other across five
+        different apps.
+      </p>
+
+      <h2><span class="doc__num">04 — idempotent by design</span>Run it again. It reconciles, not duplicates.</h2>
+      <p>
+        <code>workspace create</code> is safe to run more than once. Add a project by hand, run it
+        again, and it notices what's already there and reconciles instead of cloning a second
+        dashboard next to the first. That's what "idempotent" is supposed to mean — and it's the one
+        thing no Notion template we've used has bothered to get right.
+      </p>
+
+      <h2><span class="doc__num">05 — where it stands</span>Built in the open. Not finished — honestly.</h2>
+      <p>
+        The dashboard and all seven databases provision today. Relations, rollups, formulas, and
+        sample-data seeding are still being wired in — and the orchestrator is honest about it: if a
+        step isn't built yet, the report says <code>FAILED</code>, not a fake green checkmark. It's a
+        real, early-stage project built in public, not a finished product with a waiting list.
+      </p>
+
+      <div class="callout">
+        <span class="callout__label">the short version</span>
+        <p>
+          LifeOS is a domain model for your life, provisioned into Notion by one idempotent command.
+          The structure survives the tool. It's open source under the MIT license and a work in
+          progress.
+        </p>
+      </div>
+
+      <a class="backlink" href="index.html">← back to the landing page</a>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__row">
+    <p>Built with Spring Boot, Java 21, and more YAML than anyone should have to write.</p>
+    <div class="footer__links footer__links--wide">
+      <a href="about.html">About</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="license.html">License</a>
+      <a href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

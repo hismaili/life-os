@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Policy — LifeOS</title>
+<meta name="description" content="How the LifeOS website and software handle data — honestly. No accounts, no analytics, no tracking; your Notion token never leaves your machine." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="pages.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__row">
+    <a class="wordmark" href="index.html">life<span class="wordmark__dot">.</span>os</a>
+    <a class="topbar__cta" href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">View source ↗</a>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">privacy policy</p>
+      <h1>We don't want your data, and we mostly never see it.</h1>
+      <p class="page-hero__meta">Last updated: 7 August 2026</p>
+      <p class="page-hero__lede">
+        This site has no accounts, no analytics, and no tracking. The software runs on your machine
+        with your credentials — your Notion token and workspace never reach us.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap doc__body">
+
+      <h2><span class="doc__num">01 — the site</span>What this website collects: nothing of its own</h2>
+      <p>
+        The LifeOS website is a set of static files. It sets no cookies, runs no analytics, embeds no
+        trackers or advertising, and has no login. We do not build a profile of you, and there's no
+        database on our side to put one in.
+      </p>
+      <div class="callout">
+        <span class="callout__label">in short</span>
+        <p>No cookies, no analytics, no accounts. The site itself stores nothing about you.</p>
+      </div>
+
+      <h2><span class="doc__num">02 — hosting</span>Two things load from other companies</h2>
+      <p>To be fully honest, two ordinary web mechanics do involve third parties:</p>
+      <ul>
+        <li>
+          <strong>Hosting (GitHub Pages).</strong> The site is served by GitHub Pages. Like any web
+          host, GitHub may process technical information such as your IP address and browser type in
+          its server logs to deliver the page and guard against abuse. This is governed by
+          <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">GitHub's privacy statement</a>.
+        </li>
+        <li>
+          <strong>Fonts (Google Fonts).</strong> The pages load their typefaces from Google Fonts,
+          so your browser makes a request to Google's servers, which can see your IP address. This is
+          governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's privacy policy</a>.
+          We use it only to load fonts — no analytics.
+        </li>
+      </ul>
+      <p>
+        We don't control these providers and receive nothing from them about you. If you'd rather
+        avoid the font request entirely, the site remains fully readable with its fallback system
+        fonts.
+      </p>
+
+      <h2><span class="doc__num">03 — the software</span>Your token and workspace stay with you</h2>
+      <p>
+        LifeOS is software you run yourself. When it provisions a Notion workspace, it uses a Notion
+        integration token that <strong>you</strong> supply and that lives in <strong>your</strong>
+        environment. That token, and the contents of your Notion workspace, are sent directly from
+        your machine to Notion's API. They never pass through us — we operate no servers in that path
+        and have no way to see them.
+      </p>
+      <div class="callout">
+        <span class="callout__label">in short</span>
+        <p>Your Notion token and data go from your computer straight to Notion. We're not in the middle.</p>
+      </div>
+
+      <h2><span class="doc__num">04 — notion</span>The one service the software talks to</h2>
+      <p>
+        Because LifeOS provisions into Notion, using it means sending data to Notion under
+        <a href="https://www.notion.so/notion/Privacy-Policy" target="_blank" rel="noopener">Notion's own privacy policy</a>.
+        Your relationship there is directly with Notion, not with us.
+      </p>
+
+      <h2><span class="doc__num">05 — children</span>Not directed at children</h2>
+      <p>
+        The Project is a developer tool and is not directed at children under 13, and we do not
+        knowingly collect any information from them.
+      </p>
+
+      <h2><span class="doc__num">06 — changes</span>If this policy changes</h2>
+      <p>
+        If the site ever starts doing something new with data, this policy will be updated first and
+        the "last updated" date above will change. The history is public in the
+        <a href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">Git repository</a>.
+      </p>
+
+      <h2><span class="doc__num">07 — contact</span>Questions</h2>
+      <p>
+        Ask by <a href="https://github.com/hismaili/life-os/issues" target="_blank" rel="noopener">opening an issue on GitHub</a>.
+      </p>
+
+      <a class="backlink" href="index.html">← back to the landing page</a>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__row">
+    <p>Built with Spring Boot, Java 21, and more YAML than anyone should have to write.</p>
+    <div class="footer__links footer__links--wide">
+      <a href="about.html">About</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="license.html">License</a>
+      <a href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terms of Use — LifeOS</title>
+<meta name="description" content="The terms of use for the LifeOS website and open-source software. Plain-language summaries alongside each section." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="pages.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__row">
+    <a class="wordmark" href="index.html">life<span class="wordmark__dot">.</span>os</a>
+    <a class="topbar__cta" href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">View source ↗</a>
+  </div>
+</header>
+
+<main>
+
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="eyebrow">terms of use</p>
+      <h1>The terms, in plain language where possible.</h1>
+      <p class="page-hero__meta">Last updated: 7 August 2026</p>
+      <p class="page-hero__lede">
+        LifeOS is open-source software you run yourself. These terms cover this website and the
+        software; they're short because the arrangement is simple.
+      </p>
+    </div>
+  </section>
+
+  <section class="doc">
+    <div class="wrap doc__body">
+
+      <h2><span class="doc__num">01 — scope</span>What these terms cover</h2>
+      <p>
+        These Terms of Use ("Terms") govern your use of the LifeOS website (the "Site") and the
+        LifeOS software (the "Software"), together the "Project". By using the Site or the Software,
+        you agree to these Terms. If you don't agree, please don't use them.
+      </p>
+      <div class="callout">
+        <span class="callout__label">in short</span>
+        <p>Use the site or the software and you're agreeing to what's below.</p>
+      </div>
+
+      <h2><span class="doc__num">02 — the software</span>Open source, run by you</h2>
+      <p>
+        The Software is released as open source under the <a href="license.html">MIT License</a>.
+        Your rights to use, copy, modify, and distribute it are granted by that license, and the MIT
+        text controls if it ever conflicts with these Terms regarding the Software itself.
+      </p>
+      <p>
+        LifeOS runs on your own machine, with your own credentials. It is not a hosted service. We
+        don't operate servers on your behalf, we don't have accounts, and we never receive your
+        Notion token or the contents of your workspace. What the Software does, it does locally,
+        under your control.
+      </p>
+      <div class="callout">
+        <span class="callout__label">in short</span>
+        <p>It's MIT-licensed and self-hosted. You run it; we don't run anything for you.</p>
+      </div>
+
+      <h2><span class="doc__num">03 — your responsibilities</span>Your data, your credentials, your workspace</h2>
+      <p>You are responsible for:</p>
+      <ul>
+        <li>Keeping your Notion integration token and any other credentials secure.</li>
+        <li>Backing up your Notion workspace and any data before running provisioning commands.</li>
+        <li>Complying with Notion's own terms of service and with any laws that apply to you.</li>
+        <li>Reviewing the code before running it — it's open, so you can.</li>
+      </ul>
+      <p>
+        The Software modifies a live Notion workspace. Although provisioning is designed to be
+        idempotent — reconciling rather than duplicating — you should still run it against a
+        workspace you're prepared to have changed.
+      </p>
+
+      <h2><span class="doc__num">04 — third-party services</span>Notion and others</h2>
+      <p>
+        LifeOS provisions into Notion and may interact with other third-party services. Those
+        services are operated by their own companies under their own terms and privacy policies. We
+        aren't responsible for them, their availability, or changes to their APIs that affect how the
+        Software behaves.
+      </p>
+
+      <h2><span class="doc__num">05 — no warranty</span>Provided "as is"</h2>
+      <p>
+        The Project is provided <strong>"as is", without warranty of any kind</strong>, express or
+        implied, including but not limited to the warranties of merchantability, fitness for a
+        particular purpose, and non-infringement. It is early-stage software under active
+        development; parts of it are stubs or unfinished, and it may not work as you expect.
+      </p>
+
+      <h2><span class="doc__num">06 — limitation of liability</span>What we're not on the hook for</h2>
+      <p>
+        To the fullest extent permitted by law, the authors and contributors of LifeOS shall not be
+        liable for any claim, damages, or other liability — including any loss of data or disruption
+        to a Notion workspace — arising from or in connection with the Project or its use, whether in
+        an action of contract, tort, or otherwise.
+      </p>
+
+      <h2><span class="doc__num">07 — changes</span>These terms can change</h2>
+      <p>
+        We may update these Terms as the Project evolves. Changes take effect when posted here, and
+        the "last updated" date above will reflect them. Continuing to use the Project after a change
+        means you accept the revised Terms. The version history lives in the
+        <a href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">Git repository</a>.
+      </p>
+
+      <h2><span class="doc__num">08 — contact</span>Questions or concerns</h2>
+      <p>
+        The best way to reach the Project is by
+        <a href="https://github.com/hismaili/life-os/issues" target="_blank" rel="noopener">opening an issue on GitHub</a>.
+      </p>
+
+      <a class="backlink" href="index.html">← back to the landing page</a>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__row">
+    <p>Built with Spring Boot, Java 21, and more YAML than anyone should have to write.</p>
+    <div class="footer__links footer__links--wide">
+      <a href="about.html">About</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="license.html">License</a>
+      <a href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
