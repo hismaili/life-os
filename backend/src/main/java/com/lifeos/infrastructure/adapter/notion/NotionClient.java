@@ -1,6 +1,7 @@
 package com.lifeos.infrastructure.adapter.notion;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lifeos.application.port.NotionCredentialsHolder;
 import com.lifeos.infrastructure.adapter.notion.dto.NotionErrorResponse;
 import org.springframework.boot.web.client.ClientHttpRequestFactories;
 import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
@@ -26,15 +27,22 @@ class NotionClient {
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final String notionVersion;
 
     NotionClient(NotionProperties properties, RestClient.Builder builder, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+        this.notionVersion = properties.version();
         this.restClient = builder
                 .baseUrl("https://api.notion.com/v1")
-                .defaultHeader("Authorization", "Bearer " + properties.token())
-                .defaultHeader("Notion-Version", properties.version())
                 .defaultStatusHandler(HttpStatusCode::isError, this::handleError)
                 .build();
+    }
+
+    // Read per-call from NotionCredentialsHolder (BYOK) rather than baked into the RestClient at
+    // construction time, so the token is never held by this long-lived Spring singleton.
+    private void authHeaders(HttpHeaders headers) {
+        headers.setBearerAuth(NotionCredentialsHolder.require().token());
+        headers.set("Notion-Version", notionVersion);
     }
 
     static ClientHttpRequestFactory requestFactory(Duration connectTimeout, Duration readTimeout) {
@@ -44,11 +52,14 @@ class NotionClient {
     }
 
     <T> T post(String path, Object body, Class<T> responseType, Object... uriVariables) {
-        return executeWithRetry(() -> restClient.post().uri(path, uriVariables).body(body).retrieve().body(responseType));
+        return executeWithRetry(() -> restClient.post().uri(path, uriVariables)
+                .headers(this::authHeaders)
+                .body(body).retrieve().body(responseType));
     }
 
     <T> T get(String path, Class<T> responseType, Object... uriVariables) {
         return executeWithRetry(() -> restClient.get().uri(path, uriVariables)
+                .headers(this::authHeaders)
                 .exchange((request, response) -> {
                     if (response.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
                         return null;
@@ -61,7 +72,9 @@ class NotionClient {
     }
 
     <T> T patch(String path, Object body, Class<T> responseType, Object... uriVariables) {
-        return executeWithRetry(() -> restClient.patch().uri(path, uriVariables).body(body).retrieve().body(responseType));
+        return executeWithRetry(() -> restClient.patch().uri(path, uriVariables)
+                .headers(this::authHeaders)
+                .body(body).retrieve().body(responseType));
     }
 
     private <T> T executeWithRetry(Supplier<T> call) {

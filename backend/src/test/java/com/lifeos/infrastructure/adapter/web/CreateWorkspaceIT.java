@@ -53,7 +53,7 @@ class CreateWorkspaceIT {
 
     @Test
     void postWorkspace_persistsWorkspaceAndReturnsFailedReportWhileStepsAreStubbed() {
-        CreateWorkspaceRequest request = new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false);
+        CreateWorkspaceRequest request = new CreateWorkspaceRequest("Personal", UUID.randomUUID(), false, "token", "root-id");
 
         ResponseEntity<String> response = restTemplate.postForEntity("/api/workspaces", request, String.class);
 
@@ -67,7 +67,7 @@ class CreateWorkspaceIT {
     @Test
     void reRunWithSamePersonIdAndName_reusesExistingWorkspaceRow() {
         UUID personId = UUID.randomUUID();
-        CreateWorkspaceRequest request = new CreateWorkspaceRequest("Personal", personId, false);
+        CreateWorkspaceRequest request = new CreateWorkspaceRequest("Personal", personId, false, "token", "root-id");
 
         restTemplate.postForEntity("/api/workspaces", request, String.class);
         restTemplate.postForEntity("/api/workspaces", request, String.class);

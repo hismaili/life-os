@@ -16,16 +16,22 @@ Lombok and MapStruct run as annotation processors, so a build is required for ge
 
 - JDK 21+
 - A reachable **PostgreSQL** database (schema is owned by Flyway migrations; `ddl-auto=validate`).
-- A **Notion integration token** and the **page id** under which the workspace root is created.
+- A **Notion integration token** and the **page id** under which the workspace root is created —
+  supplied **per call** (BYOK), not as server-side config (see below).
 
-Configuration is environment-driven (see `src/main/resources/application.yml`); nothing is hardcoded:
+Everything except the Notion credentials is environment-driven (see
+`src/main/resources/application.yml`):
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `NOTION_TOKEN` | Notion integration secret (required) | _(empty — startup fails if unset)_ |
-| `NOTION_ROOT_PARENT_PAGE_ID` | Page the workspace root is created under (required) | _(empty — startup fails if unset)_ |
 | `NOTION_VERSION` | Notion API version header | `2026-03-11` |
 | `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | PostgreSQL connection | Spring Boot defaults |
+
+**Notion token is BYOK, not env-configured.** `NOTION_TOKEN` and `NOTION_ROOT_PARENT_PAGE_ID` are
+not read from the environment or any config file — the caller passes them on every `workspace
+create` invocation (CLI options or REST body fields below). The server never stores them: they
+live only in a call-scoped holder (`NotionCredentialsHolder`) for the duration of that one request
+and are cleared immediately after, whether it succeeds or fails.
 
 ## Build & test
 
@@ -48,22 +54,21 @@ The CLI command lives in `infrastructure.adapter.cli.WorkspaceCommands` and is r
 provisioning step fails):
 
 ```bash
-export NOTION_TOKEN=secret_xxx
-export NOTION_ROOT_PARENT_PAGE_ID=<notion-page-id>
-
 java -jar target/lifeos-backend-0.0.1-SNAPSHOT.jar \
-  workspace create --name "Personal" --person-id 00000000-0000-0000-0000-000000000001
+  workspace create --name "Personal" --person-id 00000000-0000-0000-0000-000000000001 \
+  --notion-token secret_xxx --notion-root-parent-page-id <notion-page-id>
 
 # with sample data
 java -jar target/lifeos-backend-0.0.1-SNAPSHOT.jar \
-  workspace create --name "Personal" --person-id <uuid> --sample-data true
+  workspace create --name "Personal" --person-id <uuid> --sample-data true \
+  --notion-token secret_xxx --notion-root-parent-page-id <notion-page-id>
 ```
 
 **Interactive** (start with no command; a `shell:>` prompt opens):
 
 ```bash
 java -jar target/lifeos-backend-0.0.1-SNAPSHOT.jar
-shell:> workspace create --name "Personal" --person-id <uuid>
+shell:> workspace create --name "Personal" --person-id <uuid> --notion-token secret_xxx --notion-root-parent-page-id <notion-page-id>
 ```
 
 ### `workspace create` options
@@ -73,6 +78,8 @@ shell:> workspace create --name "Personal" --person-id <uuid>
 | `--name` | yes | — | Workspace name (also the idempotency key together with `--person-id`) |
 | `--person-id` | yes | — | Owning person's UUID |
 | `--sample-data` | no | `false` | Populate example rows after the structure is built |
+| `--notion-token` | yes | — | Notion integration token (BYOK — never read from environment or persisted) |
+| `--notion-root-parent-page-id` | yes | — | Notion page the workspace root is created under |
 
 The command is **idempotent**: re-running with the same `--name`/`--person-id` verifies and reconciles
 the existing Notion structures instead of duplicating them. It prints one line per step
@@ -89,7 +96,20 @@ stub never silently reports success (see [`../CLAUDE.md`](../CLAUDE.md), "no sil
 ## REST alternative
 
 The same use case is exposed at `POST /api/workspaces` (see
-`infrastructure.adapter.web.WorkspaceController`) with a `CreateWorkspaceRequest` JSON body.
+`infrastructure.adapter.web.WorkspaceController`) with a `CreateWorkspaceRequest` JSON body:
+
+```json
+{
+  "name": "Personal",
+  "personId": "00000000-0000-0000-0000-000000000001",
+  "sampleData": false,
+  "notionToken": "secret_xxx",
+  "notionRootParentPageId": "<notion-page-id>"
+}
+```
+
+`notionToken` and `notionRootParentPageId` are BYOK fields, same as the CLI options — required on
+every request, never stored server-side.
 
 ## Containers (Podman/Docker)
 
@@ -101,9 +121,12 @@ The root-level `docker-compose.yml` runs the app plus a disposable Postgres, usi
 spec only (no Docker-specific extensions) so it works with either Podman or Docker:
 
 ```bash
-cp .env.example .env   # fill in NOTION_TOKEN / NOTION_ROOT_PARENT_PAGE_ID
+cp .env.example .env
 podman-compose up --build
 ```
+
+The Notion token stays BYOK inside containers too — pass it to `workspace create` at call time (CLI
+option or REST body), not through `.env`.
 
 `docker-compose.prod.yml` is the CD counterpart: a standalone file that pulls a pre-built image
 (`IMAGE=ghcr.io/<owner>/lifeos-backend:<tag>`) rather than building from source — see

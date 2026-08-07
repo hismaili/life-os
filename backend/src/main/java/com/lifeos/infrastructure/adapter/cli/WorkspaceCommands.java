@@ -24,9 +24,14 @@ public class WorkspaceCommands {
     public String create(
             @Option(longNames = "name", required = true) String name,
             @Option(longNames = "person-id", required = true) UUID personId,
-            @Option(longNames = "sample-data", defaultValue = "false") boolean sampleData) {
+            @Option(longNames = "sample-data", defaultValue = "false") boolean sampleData,
+            @Option(longNames = "notion-token", required = true,
+                    description = "Notion integration token (BYOK — supplied per invocation, never read from environment or persisted)") String notionToken,
+            @Option(longNames = "notion-root-parent-page-id", required = true,
+                    description = "Notion page id the workspace root is created under") String notionRootParentPageId) {
 
-        ProvisioningReport report = createWorkspace.execute(new CreateWorkspaceCommand(name, personId, sampleData));
+        ProvisioningReport report = createWorkspace.execute(
+                new CreateWorkspaceCommand(name, personId, sampleData, notionToken, notionRootParentPageId));
         String rendering = renderReport(report);
 
         if (report.failed()) {

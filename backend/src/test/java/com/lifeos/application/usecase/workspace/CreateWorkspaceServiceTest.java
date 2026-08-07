@@ -4,6 +4,7 @@ import com.lifeos.application.dto.workspace.CreateWorkspaceCommand;
 import com.lifeos.application.dto.workspace.ProvisioningOutcome;
 import com.lifeos.application.dto.workspace.ProvisioningReport;
 import com.lifeos.application.dto.workspace.ProvisioningStepResult;
+import com.lifeos.application.port.NotionCredentialsHolder;
 import com.lifeos.application.usecase.habit.CreateHabitsDatabaseUseCase;
 import com.lifeos.application.usecase.journal.CreateJournalDatabaseUseCase;
 import com.lifeos.application.usecase.knowledge.CreateKnowledgeDatabaseUseCase;
@@ -31,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -71,7 +73,7 @@ class CreateWorkspaceServiceTest {
     }
 
     private CreateWorkspaceCommand command(boolean sampleData) {
-        return new CreateWorkspaceCommand("Personal", personId, sampleData);
+        return new CreateWorkspaceCommand("Personal", personId, sampleData, "notion-token", "root-parent-id");
     }
 
     private void stubAllHappy() {
@@ -395,6 +397,26 @@ class CreateWorkspaceServiceTest {
         } finally {
             logger.detachAppender(appender);
         }
+    }
+
+    @Test
+    void execute_clearsNotionCredentialsHolderAfterSuccess() {
+        when(workspaceRepository.findByPersonIdAndName(personId, "Personal")).thenReturn(Optional.of(workspace));
+        stubAllHappy();
+
+        service.execute(command(false));
+
+        assertThatThrownBy(NotionCredentialsHolder::require).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void execute_clearsNotionCredentialsHolderEvenWhenAStepThrows() {
+        when(workspaceRepository.findByPersonIdAndName(personId, "Personal")).thenReturn(Optional.of(workspace));
+        when(createDashboard.execute(any())).thenThrow(new RuntimeException("boom"));
+
+        service.execute(command(false));
+
+        assertThatThrownBy(NotionCredentialsHolder::require).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

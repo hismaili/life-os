@@ -8,5 +8,17 @@ import java.util.UUID;
 public record CreateWorkspaceRequest(
         @NotBlank String name,
         @NotNull UUID personId,
-        boolean sampleData
-) {}
+        boolean sampleData,
+        @NotBlank String notionToken,
+        @NotBlank String notionRootParentPageId
+) {
+
+    private static final String REDACTED = "****";
+
+    @Override
+    public String toString() {
+        return "CreateWorkspaceRequest[name=" + name + ", personId=" + personId
+                + ", sampleData=" + sampleData + ", notionToken=" + REDACTED
+                + ", notionRootParentPageId=" + notionRootParentPageId + "]";
+    }
+}

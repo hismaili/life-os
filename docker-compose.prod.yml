@@ -40,8 +40,6 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-lifeos}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-lifeos}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
-      NOTION_TOKEN: ${NOTION_TOKEN:?set NOTION_TOKEN}
-      NOTION_ROOT_PARENT_PAGE_ID: ${NOTION_ROOT_PARENT_PAGE_ID:?set NOTION_ROOT_PARENT_PAGE_ID}
       NOTION_VERSION: ${NOTION_VERSION:-2026-03-11}
     # Loopback-only: put a reverse proxy/TLS terminator in front on the VM
     # rather than exposing the app port directly to the internet.

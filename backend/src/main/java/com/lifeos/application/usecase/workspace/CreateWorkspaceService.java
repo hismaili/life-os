@@ -4,6 +4,8 @@ import com.lifeos.application.dto.workspace.CreateWorkspaceCommand;
 import com.lifeos.application.dto.workspace.ProvisioningOutcome;
 import com.lifeos.application.dto.workspace.ProvisioningReport;
 import com.lifeos.application.dto.workspace.ProvisioningStepResult;
+import com.lifeos.application.port.NotionCredentials;
+import com.lifeos.application.port.NotionCredentialsHolder;
 import com.lifeos.application.usecase.knowledge.CreateKnowledgeDatabaseUseCase;
 import com.lifeos.application.usecase.habit.CreateHabitsDatabaseUseCase;
 import com.lifeos.application.usecase.journal.CreateJournalDatabaseUseCase;
@@ -45,6 +47,15 @@ public class CreateWorkspaceService implements CreateWorkspaceUseCase {
 
     @Override
     public ProvisioningReport execute(CreateWorkspaceCommand command) {
+        NotionCredentialsHolder.set(new NotionCredentials(command.notionToken(), command.notionRootParentPageId()));
+        try {
+            return doExecute(command);
+        } finally {
+            NotionCredentialsHolder.clear();
+        }
+    }
+
+    private ProvisioningReport doExecute(CreateWorkspaceCommand command) {
         Workspace workspace = workspaceRepository.findByPersonIdAndName(command.personId(), command.name())
                 .orElseGet(() -> workspaceRepository.save(Workspace.create(command.name(), command.personId())));
 

@@ -10,8 +10,10 @@ name: CD (placeholder)
 #   ORACLE_VM_SSH_PORT    optional, defaults to 22
 #
 # A `.env` (see .env.example) must also exist at ~/lifeos/.env on the VM
-# itself, created once out of band — it holds NOTION_TOKEN/POSTGRES_PASSWORD
-# and is deliberately not shipped through this workflow or its logs.
+# itself, created once out of band — it holds POSTGRES_PASSWORD and is
+# deliberately not shipped through this workflow or its logs. The Notion
+# token is BYOK (passed to `workspace create` at call time), so it never
+# lives in this .env at all.
 #
 # TODO(deploy): once the VM is provisioned, decide whether to also trigger
 # this on `push` of version tags (e.g. `v*.*.*`) instead of dispatch-only.
