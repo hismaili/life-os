@@ -1,0 +1,37 @@
+name: Deploy landing page
+
+# Publishes landing/ to GitHub Pages. Isolated from the backend's CI/CD —
+# this workflow only ever touches the landing/ folder.
+#
+# ONE-TIME SETUP (a repo admin, not this workflow, has to do this):
+#   Settings -> Pages -> Source: GitHub Actions
+# Without that, this workflow's deploy step fails even though the build
+# step succeeds — there's no API this workflow can call to flip it itself.
+on:
+  push:
+    branches: [main]
+    paths: ["landing/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: landing
+      - id: deployment
+        uses: actions/deploy-pages@v4

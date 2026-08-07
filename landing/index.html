@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LifeOS — the domain model behind your Notion workspace</title>
+<meta name="description" content="LifeOS is a domain model for your projects, tasks, habits, knowledge and journal — provisioned into Notion by one idempotent CLI command, instead of a template you keep rebuilding." />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar__row">
+    <a class="wordmark" href="#top">life<span class="wordmark__dot">.</span>os</a>
+    <a class="topbar__cta" href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">View source ↗</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap hero__grid">
+      <div>
+        <p class="eyebrow hero__eyebrow">a domain model, not a template</p>
+        <h1>Stop rebuilding your Notion setup every January.</h1>
+        <p class="hero__sub">
+          LifeOS isn't a template you buy once and slowly break. It's the actual data model
+          behind your projects, tasks, habits, knowledge, and journal — Notion just renders it.
+          One CLI command provisions the whole workspace, relations already wired. Run it again
+          next year and it reconciles instead of duplicating.
+        </p>
+        <div class="hero__ctas">
+          <a class="btn btn--brass" href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">Read the code</a>
+          <a class="btn btn--ghost" href="#how">See how it runs</a>
+        </div>
+      </div>
+
+      <div class="diagram" aria-hidden="true">
+        <div class="diagram__dash">
+          <strong>Dashboard</strong>
+          workspace create --name "Personal"
+        </div>
+        <div class="diagram__grid">
+          <div class="diagram__tile"><b>Projects</b>tied to an Area</div>
+          <div class="diagram__tile"><b>Tasks</b>tied to a Project</div>
+          <div class="diagram__tile"><b>Knowledge</b>notes that link</div>
+          <div class="diagram__tile"><b>Habits</b>the loop, tracked</div>
+          <div class="diagram__tile"><b>Journal</b>timestamped</div>
+          <div class="diagram__tile"><b>Resources</b>saved, findable</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--rule">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">what usually happens</p>
+        <h2>The template is beautiful for exactly one week.</h2>
+      </div>
+      <p class="prose">
+        You buy the $40 template, or you build your own from a YouTube video at 1am. It's
+        gorgeous for about a week. Then you add a project that doesn't fit the existing Areas,
+        or a habit that should roll up into a goal that doesn't exist in that database yet — and
+        the relations start breaking in ways you don't understand well enough to fix without
+        starting over.
+      </p>
+      <p class="prose">
+        So you rebuild it. Maybe in Notion again. Maybe you migrate to Obsidian, or Craft, or a
+        paper notebook, because at least paper doesn't have a schema you can silently corrupt.
+        Either way, the actual structure — how a habit connects to a goal, how a stray note
+        becomes a project — gets thrown out and rebuilt from nothing. Again.
+      </p>
+    </div>
+  </section>
+
+  <section class="section--rule">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">the actual difference</p>
+        <h2>Notion is the view. This is the model.</h2>
+      </div>
+      <p class="prose">
+        Most productivity systems <em>are</em> their tool. LifeOS keeps the two separate on
+        purpose: a real domain model — with actual invariants, actual relationships between
+        Projects and Areas and Goals — that gets provisioned into Notion as one of its possible
+        views. If you ever leave Notion, the model doesn't leave with it.
+      </p>
+      <p class="prose">
+        It's built on the methodologies you already half-remember from books you own but haven't
+        finished: <strong>GTD</strong> for capturing and reviewing everything that lands on you,
+        <strong>PARA</strong> for the Projects / Areas / Resources / Archive shape of things, a
+        <strong>Zettelkasten</strong> for notes that link to each other instead of sitting in a
+        folder, <strong>Atomic Habits'</strong> identity-based habit loop, <strong>OKRs</strong>
+        for goals that get reviewed instead of written once and forgotten. Nothing reinvented —
+        just finally wired into one system instead of five fighting each other.
+      </p>
+    </div>
+  </section>
+
+  <section class="section--rule">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">what gets provisioned</p>
+        <h2>One dashboard. Seven databases. Already related.</h2>
+      </div>
+      <div class="catalog">
+        <article class="card">
+          <span class="card__tab">01 — projects</span>
+          <h3>Projects</h3>
+          <p>Tied to the Area it serves, so "why am I doing this" is one click away, not a
+          question you ask yourself in a meeting.</p>
+        </article>
+        <article class="card">
+          <span class="card__tab">02 — tasks</span>
+          <h3>Tasks</h3>
+          <p>The actual work, always pointing back to the project it belongs to — no orphaned
+          to-dos floating in a database of their own.</p>
+        </article>
+        <article class="card">
+          <span class="card__tab">03 — knowledge</span>
+          <h3>Knowledge</h3>
+          <p>Your Zettelkasten. Notes link to notes, instead of sitting in a folder waiting to
+          be organized "someday."</p>
+        </article>
+        <article class="card">
+          <span class="card__tab">04 — habits</span>
+          <h3>Habits</h3>
+          <p>Recurring actions tracked as a loop with a real cadence, not a checkbox you forget
+          existed by week two.</p>
+        </article>
+        <article class="card">
+          <span class="card__tab">05 — journal</span>
+          <h3>Journal</h3>
+          <p>Timestamped entries connected to whatever project or habit was actually happening
+          that day — not a diary in isolation.</p>
+        </article>
+        <article class="card">
+          <span class="card__tab">06 — resources</span>
+          <h3>Resources</h3>
+          <p>The links and docs you saved and were never going to find again. Now you will,
+          because they're attached to what they're actually for.</p>
+        </article>
+        <article class="card">
+          <span class="card__tab">07 — people</span>
+          <h3>People</h3>
+          <p>Half your projects are really about a person. That context shouldn't have to live
+          only in your head.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" class="section--rule">
+    <div class="wrap how">
+      <div>
+        <p class="eyebrow">how it actually runs</p>
+        <h2>One command. Reconciled, not duplicated.</h2>
+        <p class="prose" style="margin-top:1.25rem;">
+          <code>workspace create</code> builds the whole thing — dashboard, all seven databases,
+          the relations between them — under whatever Notion page you point it at. Run it again
+          after adding a project by hand, and it notices what's already there and reconciles
+          instead of cloning a second dashboard next to the first.
+        </p>
+        <p class="prose">
+          That's not a nice-to-have. That's what "idempotent" is supposed to mean, and it's the
+          one thing no Notion template we've ever used has bothered to get right.
+        </p>
+      </div>
+
+      <div class="terminal" id="terminal">
+        <div class="terminal__bar" aria-hidden="true">
+          <span class="terminal__dot"></span><span class="terminal__dot"></span><span class="terminal__dot"></span>
+        </div>
+        <pre id="terminal-output"><span class="prompt">$</span> export NOTION_TOKEN=secret_xxx
+<span class="prompt">$</span> java -jar lifeos-backend.jar workspace create \
+    --name "Personal" --person-id 00000000-0000-0000-0000-0000000000a1
+<span class="ok">DASHBOARD: CREATED</span>
+<span class="ok">PROJECTS_DB: CREATED</span>
+<span class="ok">TASKS_DB: CREATED</span>
+<span class="ok">KNOWLEDGE_DB: CREATED</span>
+<span class="ok">HABITS_DB: CREATED</span>
+<span class="ok">JOURNAL_DB: CREATED</span>
+<span class="ok">RESOURCES_DB: CREATED</span>
+<span class="ok">PEOPLE_DB: CREATED</span>
+<span class="prompt">$</span> java -jar lifeos-backend.jar workspace create \
+    --name "Personal" --person-id 00000000-0000-0000-0000-0000000000a1
+<span class="ok">DASHBOARD: RECONCILED</span>
+<span class="terminal-dim">... same seven, reconciled, not duplicated</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--rule">
+    <div class="wrap">
+      <div class="status">
+        <div>
+          <span class="status__stamp">status: in progress</span>
+          <h2 style="margin-top:0.9rem; font-size:1.5rem;">Built in the open. Not finished. That's the point right now.</h2>
+        </div>
+        <p class="prose">
+          The dashboard and all seven databases provision today. Relations, rollups, formulas,
+          and sample-data seeding are still being wired in — and the orchestrator is honest about
+          it: if a step isn't built yet, the report says <code>FAILED</code>, not a fake green
+          checkmark. We'd rather you see exactly what's real than pretend the whole thing is done.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__row">
+    <p>Built with Spring Boot, Java 21, and more YAML than anyone should have to write.</p>
+    <div class="footer__links">
+      <a href="https://github.com/hismaili/life-os" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/hismaili/life-os/tree/main/docs/architecture" target="_blank" rel="noopener">Architecture docs</a>
+      <a href="https://github.com/hismaili/life-os/issues" target="_blank" rel="noopener">Open an issue</a>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+backend/target
+.claude
+.idea
+.vscode
+certs
+desktop/build
